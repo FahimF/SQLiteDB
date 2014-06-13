@@ -13,7 +13,9 @@ extension String {
 	func positionOf(sub:String)->Int {
 		var pos = -1
 		let range = self.rangeOfString(sub)
-		pos = distance(self.startIndex, range.startIndex)
+		if !range.isEmpty {
+			pos = distance(self.startIndex, range.startIndex)
+		}
 		return pos
 	}
 	
@@ -34,8 +36,37 @@ extension String {
 	}
 }
 
+class SQLRow {
+	var keys:String[] = String[]()
+	var values:Any[] = Any[]()
+	var types:CInt[] = CInt[]()
+	
+	func add(key:String, value:Any, type:CInt) {
+		keys += key
+		values += value
+		types += type
+	}
+	
+	func valueForKey(key:String)->Any {
+		var val:Any? = nil
+		let ndx = find(keys, key)
+		if ndx {
+			let type = types[ndx!]
+			let val = values[ndx!]
+			if type == SQLITE_INTEGER {
+				return val as Int
+			}
+			if type == SQLITE_TEXT {
+				return val as String
+			}
+		}
+		return nil
+	}
+}
+
 class SQLiteDB {
 	let DB_NAME:CString = "data.db"
+	let SQLITE_DATE = SQLITE_NULL + 1
 	var db:COpaquePointer = nil
 	var queue:dispatch_queue_t = dispatch_queue_create("SQLiteDB", nil)
 	
@@ -152,8 +183,8 @@ class SQLiteDB {
 	}
 	
 	// Run SQL query
-	func query(sql:String)->Dictionary<String, String>[] {
-		var rows = Dictionary<String, String>[]()
+	func query(sql:String)->SQLRow[] {
+		var rows = SQLRow[]()
 		dispatch_sync(queue) {
 			var cSql:CString = sql.bridgeToObjectiveC().cString()
 			var stmt:COpaquePointer = nil
@@ -187,10 +218,11 @@ class SQLiteDB {
 					fetchColumnInfo = false
 				}
 				// Get row data for each column
-				var row = Dictionary<String, String>()
+				var row = SQLRow()
 				for index in 0..columnCount {
 					let key = columnNames[Int(index)]
-					row[key] = self.getColumnValue(index, stmt: stmt)
+					let type = columnTypes[Int(index)]
+					row.add(key, value: self.getColumnValue(index, type: type, stmt: stmt), type: type)
 				}
 				rows.append(row)
 				// Next row
@@ -273,7 +305,7 @@ class SQLiteDB {
 				return SQLITE_NULL
 			}
 			if contains(dateTypes, tmp) {
-				return SQLITE_NULL + 1
+				return SQLITE_DATE
 			}
 			return SQLITE_TEXT
 		} else {
@@ -283,11 +315,57 @@ class SQLiteDB {
 	}
 	
 	// Get column value
-	func getColumnValue(index:CInt, stmt:COpaquePointer)->String {
-		var value = ""
+	func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->Any {
+		// Integer
+		if type == SQLITE_INTEGER {
+			let val = sqlite3_column_int(stmt, index)
+			return Int(val)
+		}
+		// Float
+		if type == SQLITE_FLOAT {
+			let val = sqlite3_column_double(stmt, index)
+			return Double(val)
+		}
+		// Text - handled by default handler at end
+		// Blob
+		if type == SQLITE_BLOB {
+			let data = sqlite3_column_blob(stmt, index)
+			let size = sqlite3_column_bytes(stmt, index)
+			let val = NSData(bytes:data, length: Int(size))
+			return val
+		}
+		// Null
+		if type == SQLITE_NULL {
+			return nil
+		}
+		// Date
+		if type == SQLITE_DATE {
+			// Is this a text date
+			let txt = sqlite3_column_text(stmt, index)
+			if txt {
+				let cstr = CString(txt)
+				let buf = NSString.stringWithCString(cstr) as NSString
+				let set = NSCharacterSet(charactersInString: "-:")
+				let range = buf.rangeOfCharacterFromSet(set)
+				if range.location != NSNotFound {
+					// Convert to time
+					var time:tm = tm(tm_sec: 0, tm_min: 0, tm_hour: 0, tm_mday: 0, tm_mon: 0, tm_year: 0, tm_wday: 0, tm_yday: 0, tm_isdst: 0, tm_gmtoff: 0, tm_zone:nil)
+					strptime(cstr, "%Y-%m-%d %H:%M:%S", &time)
+					time.tm_isdst = -1
+					let diff = NSTimeZone.localTimeZone().secondsFromGMT
+					let t = mktime(&time) + diff
+					let ti = NSTimeInterval(t)
+					let val = NSDate(timeIntervalSince1970:ti)
+				}
+			}
+			// If not a text date, then it's a time interval
+			let val = sqlite3_column_double(stmt, index)
+			return Double(val)
+		}
+		// If nothing works, return a string representation
 		let buf:UnsafePointer<CUnsignedChar> = sqlite3_column_text(stmt, index)
 		let cstr = CString(buf)
-		value = String.fromCString(cstr)
-		return value
+		let val = String.fromCString(cstr)
+		return val
 	}
 }
