@@ -3,6 +3,19 @@ SQLiteDB
 
 This is a basic SQLite wrapper for Swift. It is very simple at the moment and does not provide any advance functionality.
 
+Adding to Your Project
+---
+* Add SQLiteDB.swift to your project
+* If you don't have a bridging header file, create one. (It's just a header file - but it's usually named Bridging-Header.h or <projtname>-Bridging-Header.h).
+* If you added a bridging header file, then make sure that you modify your project settings to point to the bridging header file. This will be under the "Build Settings" for your target and will be named "Objective-C Bridging Header".
+* Add an import for SQLite to your bridging header file, like this:
+```objective-c
+#import <sqlite3.h>
+```
+* Add the SQLite library (libsqlite3.0.dylib) to your project under the "Build Phases" - "Link Binary With Libraries" section.
+
+That's it. You're set!
+
 Usage
 ---
 * You can gain access to the shared database instance as follows:
