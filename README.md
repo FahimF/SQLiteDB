@@ -8,9 +8,10 @@ Adding to Your Project
 * Add SQLiteDB.swift to your project
 * If you don't have a bridging header file, create one. (It's just a header file - but it's usually named Bridging-Header.h or &lt;projectname&gt;-Bridging-Header.h).
 * If you added a bridging header file, then make sure that you modify your project settings to point to the bridging header file. This will be under the "Build Settings" for your target and will be named "Objective-C Bridging Header".
-* Add an import for SQLite to your bridging header file, like this:
+* Add the following imports to your bridging header file, like this:
 ```objective-c
 #import <sqlite3.h>
+#import <time.h>
 ```
 * Add the SQLite library (libsqlite3.0.dylib) to your project under the "Build Phases" - "Link Binary With Libraries" section.
 
@@ -26,6 +27,8 @@ Usage
 * You can make an SQL query like this (the results are returned as an array of Dictionary objects):
 ```swift
 	let data = db.query("SELECT * FROM customers WHERE name='John'")
+	let row = data[0]
+	let name = row.valueForKey("name")	
 ```
 In the above, `db` is a reference to the shared SQLite database instance.
 
