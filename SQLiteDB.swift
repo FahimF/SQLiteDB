@@ -81,7 +81,7 @@ class SQLiteDB {
 			// Clean DB
 			println("SQLiteDB - Optimize DB")
 			let sql = "VACUUM; ANALYZE"
-			if execSQL(sql) != SQLITE_OK {
+			if execute(sql) != SQLITE_OK {
 				println("SQLiteDB - Error cleaning DB")
 			}
 			sqlite3_close(db)
@@ -89,7 +89,7 @@ class SQLiteDB {
 	}
 	
 	// Execute SQL and return result code
-	func execSQL(sql:String)->CInt {
+	func execute(sql:String)->CInt {
 		var result:CInt = 0
 		dispatch_sync(queue) {
 			var cSql:CString = sql.bridgeToObjectiveC().cString()
