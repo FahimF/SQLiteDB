@@ -48,19 +48,23 @@ class SQLRow {
 	}
 	
 	func valueForKey(key:String)->Any {
-		var val:Any? = nil
-		let ndx = find(keys, key)
-		if ndx {
-			let type = types[ndx!]
-			let val = values[ndx!]
-			if type == SQLITE_INTEGER {
-				return val as Int
-			}
-			if type == SQLITE_TEXT {
-				return val as String
-			}
-		}
-		return nil
+    var val:Any? = nil
+    let ndx = find(keys, key)
+    if ndx {
+      let type = types[ndx!]
+      let val = values[ndx!]
+      switch type {
+      case SQLITE_INTEGER:
+        return val as Int
+      case SQLITE_TEXT:
+        return val as String
+      case SQLITE_FLOAT:
+        return val as Double // double because sqlite floats have 64 bit percision
+      default:
+        return val // Don't know what we got, just pass it back
+      }
+    }
+    return nil
 	}
 }
 
