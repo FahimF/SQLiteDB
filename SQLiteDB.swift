@@ -53,11 +53,15 @@ class SQLRow {
 		if ndx {
 			let type = types[ndx!]
 			let val = values[ndx!]
-			if type == SQLITE_INTEGER {
+			switch type {
+			case SQLITE_INTEGER:
 				return val as Int
-			}
-			if type == SQLITE_TEXT {
+			case SQLITE_TEXT:
 				return val as String
+			case SQLITE_FLOAT:
+				return val as Double // double because sqlite floats have 64 bit percision
+			default:
+				return val // Don't know what we got, just pass it back
 			}
 		}
 		return nil
@@ -151,7 +155,7 @@ class SQLiteDB {
 			var cSql:CString = sql.bridgeToObjectiveC().cString()
 			var stmt:COpaquePointer = nil
 			// Prepare
-			result = sqlite3_prepare_v2(self.db, cSql, 0, &stmt, nil)
+			result = sqlite3_prepare_v2(self.db, cSql, -1, &stmt, nil)
 			if result != SQLITE_OK {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(self.lastSQLError())"
@@ -161,7 +165,7 @@ class SQLiteDB {
 			}
 			// Step
 			result = sqlite3_step(stmt)
-			if result != SQLITE_OK {
+			if result != SQLITE_OK && result != SQLITE_DONE {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(self.lastSQLError())"
 				println(msg)
@@ -252,9 +256,13 @@ class SQLiteDB {
 	// Return last SQL error
 	func lastSQLError()->String {
 		var err:CString? = nil
-		dispatch_sync(queue) {
-			err = sqlite3_errmsg(self.db)
-		}
+    if dispatch_get_current_queue() != queue {
+      dispatch_sync(queue) {
+        err = sqlite3_errmsg(self.db)
+      }
+    } else {
+      err = sqlite3_errmsg(self.db)
+    }
 		return (err ? NSString(CString:err!) : "")
 	}
 	
