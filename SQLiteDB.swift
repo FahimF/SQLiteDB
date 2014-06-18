@@ -252,9 +252,13 @@ class SQLiteDB {
 	// Return last SQL error
 	func lastSQLError()->String {
 		var err:CString? = nil
-		dispatch_sync(queue) {
-			err = sqlite3_errmsg(self.db)
-		}
+    if dispatch_get_current_queue() != queue {
+      dispatch_sync(queue) {
+        err = sqlite3_errmsg(self.db)
+      }
+    } else {
+      err = sqlite3_errmsg(self.db)
+    }
 		return (err ? NSString(CString:err!) : "")
 	}
 	
