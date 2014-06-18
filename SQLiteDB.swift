@@ -151,7 +151,7 @@ class SQLiteDB {
 			var cSql:CString = sql.bridgeToObjectiveC().cString()
 			var stmt:COpaquePointer = nil
 			// Prepare
-			result = sqlite3_prepare_v2(self.db, cSql, 0, &stmt, nil)
+			result = sqlite3_prepare_v2(self.db, cSql, -1, &stmt, nil)
 			if result != SQLITE_OK {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(self.lastSQLError())"
