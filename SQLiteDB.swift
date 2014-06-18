@@ -161,7 +161,7 @@ class SQLiteDB {
 			}
 			// Step
 			result = sqlite3_step(stmt)
-			if result != SQLITE_OK {
+			if result != SQLITE_OK && result != SQLITE_DONE {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(self.lastSQLError())"
 				println(msg)
