@@ -5,15 +5,10 @@ This is a basic SQLite wrapper for Swift. It is very simple at the moment and do
 
 Adding to Your Project
 ---
-* Create your SQLite database however you like but name it `data.db` and then add the `data.db` file to your Xcode project. (If you want to name the database file something other than `data.db`, then change the `DB_NAME` constant in the `SQLiteDB` class accordingly.)
-* Add SQLiteDB.swift to your project
-* If you don't have a bridging header file, create one. (It's just a header file - but it's usually named Bridging-Header.h or &lt;projectname&gt;-Bridging-Header.h).
-* If you added a bridging header file, then make sure that you modify your project settings to point to the bridging header file. This will be under the "Build Settings" for your target and will be named "Objective-C Bridging Header".
-* Add the following imports to your bridging header file:
-```objective-c
-#import <sqlite3.h>
-#import <time.h>
-```
+* Create your SQLite database however you like, but name it `data.db` and then add the `data.db` file to your Xcode project. (If you want to name the database file something other than `data.db`, then change the `DB_NAME` constant in the `SQLiteDB` class accordingly.)
+* Add all of the included source files (except for README.md, of course) to your project.
+* If you don't have a bridging header file, use the included `Bridging-Header.h` file. If you already have a bridging header file, then copy the contents from the included `Bridging-Header.h` file in to your own bridging header file.
+* If you didn't have a bridging header file, make sure that you modify your project settings to point to the new bridging header file. This will be under the "Build Settings" for your target and will be named "Objective-C Bridging Header".
 * Add the SQLite library (libsqlite3.0.dylib) to your project under the "Build Phases" - "Link Binary With Libraries" section.
 
 That's it. You're set!

@@ -37,6 +37,7 @@ extension String {
 }
 
 class SQLRow {
+	let SQLITE_DATE = SQLITE_NULL + 1
 	var keys:String[] = String[]()
 	var values:Any[] = Any[]()
 	var types:CInt[] = CInt[]()
@@ -56,9 +57,20 @@ class SQLRow {
 			if type == SQLITE_INTEGER {
 				return val as Int
 			}
-			if type == SQLITE_TEXT {
-				return val as String
+			if type == SQLITE_FLOAT {
+				return val as Double
 			}
+			if type == SQLITE_BLOB {
+				return val as NSData
+			}
+			if type == SQLITE_NULL {
+				return nil
+			}
+			if type == SQLITE_DATE {
+				return val as NSDate
+			}
+			// Return everything else as String
+			return val as String
 		}
 		return nil
 	}
@@ -69,14 +81,13 @@ class SQLiteDB {
 	let SQLITE_DATE = SQLITE_NULL + 1
 	var db:COpaquePointer = nil
 	var queue:dispatch_queue_t = dispatch_queue_create("SQLiteDB", nil)
+	struct Static {
+		static var instance: SQLiteDB? = nil
+		static var token: dispatch_once_t = 0
+	}
 	
 	class func sharedInstance() -> SQLiteDB! {
-		struct Static {
-			static var instance: SQLiteDB? = nil
-			static var onceToken: dispatch_once_t = 0
-		}
-		
-		dispatch_once(&Static.onceToken) {
+		dispatch_once(&Static.token) {
 			println("SQLiteDB - Dispatch once")
 			Static.instance = self()
 		}
@@ -85,6 +96,7 @@ class SQLiteDB {
  
 	@required init() {
 		println("SQLiteDB - Init method")
+		assert(Static.instance == nil, "Singleton already initialized!")
 		// Get path to DB in Documents directory
 		let docDir:AnyObject = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
 		let dbName:String = String.fromCString(DB_NAME)
@@ -151,7 +163,7 @@ class SQLiteDB {
 			var cSql:CString = sql.bridgeToObjectiveC().cString()
 			var stmt:COpaquePointer = nil
 			// Prepare
-			result = sqlite3_prepare_v2(self.db, cSql, 0, &stmt, nil)
+			result = sqlite3_prepare_v2(self.db, cSql, -1, &stmt, nil)
 			if result != SQLITE_OK {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(self.lastSQLError())"
@@ -161,7 +173,7 @@ class SQLiteDB {
 			}
 			// Step
 			result = sqlite3_step(stmt)
-			if result != SQLITE_OK {
+			if result != SQLITE_OK && result != SQLITE_DONE {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(self.lastSQLError())"
 				println(msg)
@@ -233,11 +245,23 @@ class SQLiteDB {
 		return rows
 	}
 	
-	// SQL escape string
+	// SQL escape string - hacky version using an intermediate Objective-C class to make it work
 	func esc(str: String)->String {
-		var cstr:CString = str.bridgeToObjectiveC().cString()
-//		cstr = sqlite3_vmprintf("%Q", CVaListPointer(fromUnsafePointer: &cstr))
-		return ""
+		println("SQLiteDB - Original string: \(str)")
+		let sql = Bridge.esc(str)
+		println("SQLiteDB - Escaped string: \(sql)")
+		return sql
+	}
+	
+	// SQL escape string - original version, does not work correctly at the moment
+	func esc2(str: String)->String {
+		println("SQLiteDB - Original string: \(str)")
+		let args = getVaList([str])
+		let cstr = sqlite3_vmprintf("%Q", args)
+		let sql = String.fromCString(cstr)
+		sqlite3_free(cstr)
+		println("SQLiteDB - Escaped string: \(sql)")
+		return sql
 	}
 	
 	// Return last insert ID
@@ -252,7 +276,11 @@ class SQLiteDB {
 	// Return last SQL error
 	func lastSQLError()->String {
 		var err:CString? = nil
-		dispatch_sync(queue) {
+		if dispatch_get_current_queue() != queue {
+			dispatch_sync(queue) {
+				err = sqlite3_errmsg(self.db)
+			}
+		} else {
 			err = sqlite3_errmsg(self.db)
 		}
 		return (err ? NSString(CString:err!) : "")
@@ -356,11 +384,13 @@ class SQLiteDB {
 					let t = mktime(&time) + diff
 					let ti = NSTimeInterval(t)
 					let val = NSDate(timeIntervalSince1970:ti)
+					return val
 				}
 			}
 			// If not a text date, then it's a time interval
 			let val = sqlite3_column_double(stmt, index)
-			return Double(val)
+			let dt = NSDate(timeIntervalSince1970: val)
+			return dt
 		}
 		// If nothing works, return a string representation
 		let buf:UnsafePointer<CUnsignedChar> = sqlite3_column_text(stmt, index)
