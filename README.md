@@ -5,6 +5,7 @@ This is a basic SQLite wrapper for Swift. It is very simple at the moment and do
 
 Adding to Your Project
 ---
+* Create your SQLite database however you like but name it `data.db` and then add the `data.db` file to your Xcode project. (If you want to name the database file something other than `data.db`, then change the `DB_NAME` constant in the `SQLiteDB` class accordingly.)
 * Add SQLiteDB.swift to your project
 * If you don't have a bridging header file, create one. (It's just a header file - but it's usually named Bridging-Header.h or &lt;projectname&gt;-Bridging-Header.h).
 * If you added a bridging header file, then make sure that you modify your project settings to point to the bridging header file. This will be under the "Build Settings" for your target and will be named "Objective-C Bridging Header".
