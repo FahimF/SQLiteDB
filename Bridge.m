@@ -13,7 +13,7 @@
 
 +(NSString *)esc:(NSString *)str {
 	if (!str || [str length] == 0) {
-		return @"";
+		return @"''";
 	}
 	NSString *buf = @(sqlite3_mprintf("%q", [str cStringUsingEncoding:NSUTF8StringEncoding]));
 	return buf;
