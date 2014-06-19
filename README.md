@@ -1,7 +1,7 @@
 SQLiteDB
 ========
 
-This is a basic SQLite wrapper for Swift. It is very simple at the moment and does not provide any advance functionality.
+This is a basic SQLite wrapper for Swift. It is very simple at the moment and does not provide any advanced functionality. Additionally, it's not pure Swift at the moment due to some difficulties in making all of the necessary sqlite C API calls from Swift.
 
 Adding to Your Project
 ---
