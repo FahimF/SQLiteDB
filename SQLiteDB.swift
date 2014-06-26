@@ -401,7 +401,7 @@ class SQLiteDB {
 				let buf = NSString.stringWithCString(cstr) as NSString
 				let set = NSCharacterSet(charactersInString: "-:")
 				let range = buf.rangeOfCharacterFromSet(set)
-				if range.location != NSNotFound {
+				if range.location != Foundation.NSNotFound {
 					// Convert to time
 					var time:tm = tm(tm_sec: 0, tm_min: 0, tm_hour: 0, tm_mday: 0, tm_mon: 0, tm_year: 0, tm_wday: 0, tm_yday: 0, tm_isdst: 0, tm_gmtoff: 0, tm_zone:nil)
 					strptime(cstr, "%Y-%m-%d %H:%M:%S", &time)
