@@ -24,7 +24,7 @@ Usage
 ```swift
 	let data = db.query("SELECT * FROM customers WHERE name='John'")
 	let row = data[0]
-	if let name = row.["name"] {
+	if let name = row["name"] {
 		textLabel.text = name.string
 	}
 ```
