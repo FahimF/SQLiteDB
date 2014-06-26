@@ -185,7 +185,7 @@ class SQLiteDB {
 	func execute(sql:String)->CInt {
 		var result:CInt = 0
 		dispatch_sync(queue) {
-			var cSql:CString = sql.bridgeToObjectiveC().cString()
+			var cSql:CString = sql.bridgeToObjectiveC().UTF8String
 			var stmt:COpaquePointer = nil
 			// Prepare
 			result = sqlite3_prepare_v2(self.db, cSql, -1, &stmt, nil)

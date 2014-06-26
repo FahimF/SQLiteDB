@@ -41,5 +41,7 @@ Questions?
 * Web: [http://rooksoft.sg/](http://rooksoft.sg/)
 * Twitter: [http://twitter.com/FahimFarook](http://twitter.com/FahimFarook)
 
+SQLiteDB is under DWYWPL - Do What You Will Public License :) Do whatever you want either personally or commercially with the code but if you'd like, feel free to attribute in your app.
+
 
 
