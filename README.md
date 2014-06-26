@@ -24,7 +24,9 @@ Usage
 ```swift
 	let data = db.query("SELECT * FROM customers WHERE name='John'")
 	let row = data[0]
-	let name = row.valueForKey("name")	
+	if let name = row.["name"] {
+		textLabel.text = name.string
+	}
 ```
 In the above, `db` is a reference to the shared SQLite database instance and `SQLRow` is a class defined to model a data row in SQLiteDB.
 

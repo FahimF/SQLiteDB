@@ -9,6 +9,8 @@
 import Foundation
 import UIKit
 
+let SQLITE_DATE = SQLITE_NULL + 1
+
 extension String {
 	func positionOf(sub:String)->Int {
 		var pos = -1
@@ -36,49 +38,72 @@ extension String {
 	}
 }
 
-class SQLRow {
-	let SQLITE_DATE = SQLITE_NULL + 1
-	var keys:String[] = String[]()
-	var values:Any[] = Any[]()
-	var types:CInt[] = CInt[]()
-	
-	func add(key:String, value:Any, type:CInt) {
-		keys += key
-		values += value
-		types += type
+class SQLColumn {
+	var value:Any = nil
+	var type:CInt = -1
+
+	init(value:Any, type:CInt) {
+		self.value = value
+		self.type = type
 	}
 	
-	func valueForKey(key:String)->Any {
-		var val:Any? = nil
-		let ndx = find(keys, key)
-		if ndx {
-			let type = types[ndx!]
-			let val = values[ndx!]
-			if type == SQLITE_INTEGER {
-				return val as Int
-			}
-			if type == SQLITE_FLOAT {
-				return val as Double
-			}
-			if type == SQLITE_BLOB {
-				return val as NSData
-			}
-			if type == SQLITE_NULL {
-				return nil
-			}
-			if type == SQLITE_DATE {
-				return val as NSDate
-			}
-			// Return everything else as String
-			return val as String
+	var string:String {
+		if type == SQLITE_TEXT {
+			return value as String
+		} else {
+			return ""
 		}
-		return nil
+	}
+	
+	var integer:Int {
+		if type == SQLITE_INTEGER {
+			return value as Int
+		} else {
+			return 0
+		}
+	}
+	
+	var double:Double {
+		if type == SQLITE_FLOAT {
+			return value as Double
+		} else {
+			return 0.0
+		}
+	}
+	
+	var data:NSData? {
+		if type == SQLITE_BLOB {
+			return value as? NSData
+		} else {
+			return nil
+		}
+	}
+	
+	var date:NSDate? {
+		if type == SQLITE_DATE {
+			return value as? NSDate
+		} else {
+			return nil
+		}
+	}
+}
+
+class SQLRow {
+	var data = Dictionary<String, SQLColumn>()
+	
+	subscript(key: String) -> SQLColumn? {
+		get {
+			return data[key]
+		}
+		
+		set(newVal) {
+			data[key] = newVal
+		}
 	}
 }
 
 class SQLiteDB {
 	let DB_NAME:CString = "data.db"
-	let SQLITE_DATE = SQLITE_NULL + 1
 	var db:COpaquePointer = nil
 	var queue:dispatch_queue_t = dispatch_queue_create("SQLiteDB", nil)
 	struct Static {
@@ -234,7 +259,8 @@ class SQLiteDB {
 				for index in 0..columnCount {
 					let key = columnNames[Int(index)]
 					let type = columnTypes[Int(index)]
-					row.add(key, value: self.getColumnValue(index, type: type, stmt: stmt), type: type)
+					let col = SQLColumn(value: self.getColumnValue(index, type: type, stmt: stmt), type: type)
+					row[key] = col
 				}
 				rows.append(row)
 				// Next row
@@ -399,3 +425,12 @@ class SQLiteDB {
 		return val
 	}
 }
+
+/*
+-(int)columnTypeAtIndex:(int)column inStatement:(sqlite3_stmt *)statement {
+	if ([dataType hasPrefix:@"UNSIGNED"]) {
+		dataType = [dataType substringWithRange:NSMakeRange(0, 8)];
+	}
+	dataType = [dataType stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+*/
