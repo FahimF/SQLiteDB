@@ -37,6 +37,7 @@ In the above, `db` is a reference to the shared SQLite database instance and `SQ
 
 Questions?
 ---
+* FAQ: [FAQs](https://github.com/FahimF/SQLiteDB/wiki/FAQs)
 * Email: [fahimf@gmail.com](mailto:fahimf@gmail.com)
 * Web: [http://rooksoft.sg/](http://rooksoft.sg/)
 * Twitter: [http://twitter.com/FahimFarook](http://twitter.com/FahimFarook)
