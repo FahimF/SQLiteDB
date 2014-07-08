@@ -39,20 +39,25 @@ extension String {
 }
 
 class SQLColumn {
-	var value:Any = nil
+	var value:Any? = nil
 	var type:CInt = -1
 
 	init(value:Any, type:CInt) {
+		println("SQLiteDB - Initialize column with type: \(type), value: \(value)")
 		self.value = value
 		self.type = type
 	}
 	
 	var string:String {
-		if type == SQLITE_TEXT {
-			return value as String
-		} else {
-			return ""
+		if value {
+			println("SQLiteDB - Column type: \(type), value: \(value)")
+			if type == SQLITE_TEXT {
+				return value as String
+			} else {
+				return ""
+			}
 		}
+		return ""
 	}
 	
 	var integer:Int {
@@ -104,11 +109,13 @@ class SQLRow {
 
 class SQLiteDB {
 	let DB_NAME:CString = "data.db"
+	let QUEUE_LABLE:CString = "SQLiteDB"
 	var db:COpaquePointer = nil
-	var queue:dispatch_queue_t = dispatch_queue_create("SQLiteDB", nil)
+	var queue:dispatch_queue_t
+	
 	struct Static {
-		static var instance: SQLiteDB? = nil
-		static var token: dispatch_once_t = 0
+		static var instance:SQLiteDB? = nil
+		static var token:dispatch_once_t = 0
 	}
 	
 	class func sharedInstance() -> SQLiteDB! {
@@ -121,10 +128,12 @@ class SQLiteDB {
  
 	@required init() {
 		println("SQLiteDB - Init method")
-		assert(Static.instance == nil, "Singleton already initialized!")
+//		assert(Static.instance == nil, "Singleton already initialized!")
+		// Set queue
+		queue = dispatch_queue_create(QUEUE_LABLE, nil)
 		// Get path to DB in Documents directory
 		let docDir:AnyObject = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
-		let dbName:String = String.fromCString(DB_NAME)
+		let dbName:String = String.fromCString(DB_NAME)!
 		let path = docDir.stringByAppendingPathComponent(dbName)
 		// Check if copy of DB is there in Documents directory
 		let fm = NSFileManager.defaultManager()
@@ -133,13 +142,13 @@ class SQLiteDB {
 			let from = NSBundle.mainBundle().resourcePath.stringByAppendingPathComponent(dbName)
 			var error:NSError?
 			if !fm.copyItemAtPath(from, toPath: path, error: &error) {
-				println("SQLiteDB - failed to open DB!")
+				println("SQLiteDB - failed to copy writable version of DB!")
 				println("Error - \(error!.localizedDescription)")
 				return
 			}
 		}
 		// Open the DB
-		let cpath = path.bridgeToObjectiveC().cString()
+		let cpath = path.bridgeToObjectiveC().cStringUsingEncoding(NSUTF8StringEncoding)
 		let error = sqlite3_open(cpath, &db)
 		if error != SQLITE_OK {
 			// Open failed, close DB and fail
@@ -150,6 +159,7 @@ class SQLiteDB {
 	
 	deinit {
 		closeDatabase()
+		dispatch_release(queue)
 	}
  
 	func closeDatabase() {
@@ -220,10 +230,10 @@ class SQLiteDB {
 	}
 	
 	// Run SQL query
-	func query(sql:String)->SQLRow[] {
-		var rows = SQLRow[]()
+	func query(sql:String)->[SQLRow] {
+		var rows = [SQLRow]()
 		dispatch_sync(queue) {
-			var cSql:CString = sql.bridgeToObjectiveC().cString()
+			var cSql:CString = sql.bridgeToObjectiveC().cStringUsingEncoding(NSUTF8StringEncoding)
 			var stmt:COpaquePointer = nil
 			var result:CInt = 0
 			// Prepare statement
@@ -238,17 +248,17 @@ class SQLiteDB {
 			// Execute query
 			var fetchColumnInfo = true
 			var columnCount:CInt = 0
-			var columnNames = String[]()
-			var columnTypes = CInt[]()
+			var columnNames = [String]()
+			var columnTypes = [CInt]()
 			result = sqlite3_step(stmt)
 			while result == SQLITE_ROW {
 				// Should we get column info?
 				if fetchColumnInfo {
 					columnCount = sqlite3_column_count(stmt)
-					for index in 0..columnCount {
+					for index in 0..<columnCount {
 						// Get column name
 						let name = sqlite3_column_name(stmt, index)
-						columnNames += String.fromCString(name)
+						columnNames += String.fromCString(name)!
 						// Get column type
 						columnTypes += self.getColumnType(index, stmt: stmt)
 					}
@@ -256,11 +266,13 @@ class SQLiteDB {
 				}
 				// Get row data for each column
 				var row = SQLRow()
-				for index in 0..columnCount {
+				for index in 0..<columnCount {
 					let key = columnNames[Int(index)]
 					let type = columnTypes[Int(index)]
-					let col = SQLColumn(value: self.getColumnValue(index, type: type, stmt: stmt), type: type)
-					row[key] = col
+					if let val = self.getColumnValue(index, type: type, stmt: stmt) {
+						let col = SQLColumn(value: val, type: type)
+						row[key] = col
+					}
 				}
 				rows.append(row)
 				// Next row
@@ -284,10 +296,10 @@ class SQLiteDB {
 		println("SQLiteDB - Original string: \(str)")
 		let args = getVaList([str])
 		let cstr = sqlite3_vmprintf("%Q", args)
-		let sql = String.fromCString(cstr)
+		let sql = String.fromCString(CString(cstr))
 		sqlite3_free(cstr)
 		println("SQLiteDB - Escaped string: \(sql)")
-		return sql
+		return sql!
 	}
 	
 	// Return last insert ID
@@ -302,14 +314,14 @@ class SQLiteDB {
 	// Return last SQL error
 	func lastSQLError()->String {
 		var err:CString? = nil
-		if dispatch_get_current_queue() != queue {
+		if dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) != QUEUE_LABLE {
 			dispatch_sync(queue) {
 				err = sqlite3_errmsg(self.db)
 			}
 		} else {
 			err = sqlite3_errmsg(self.db)
 		}
-		return (err ? NSString(CString:err!) : "")
+		return (err ? NSString(CString:err!, encoding:NSUTF8StringEncoding) : "")
 	}
 	
 	// Show alert with either supplied message or last error
@@ -331,9 +343,9 @@ class SQLiteDB {
 		let realTypes = ["DECIMAL", "DOUBLE", "DOUBLE PRECISION", "FLOAT", "NUMERIC", "REAL"]
 		// Determine type of column - http://www.sqlite.org/c3ref/c_blob.html
 		let buf:CString? = sqlite3_column_decltype(stmt, index)
-		println("SQLiteDB - Got column type: \(buf)")
+//		println("SQLiteDB - Got column type: \(buf)")
 		if (buf) {
-			var tmp = String.fromCString(buf!).uppercaseString
+			var tmp = String.fromCString(buf!)!.uppercaseString
 			// Remove brackets
 			let pos = tmp.positionOf("(")
 			if pos > 0 {
@@ -342,7 +354,7 @@ class SQLiteDB {
 			// Remove unsigned?
 			// Remove spaces
 			// Is the data type in any of the pre-set values?
-			println("SQLiteDB - Cleaned up column type: \(tmp)")
+//			println("SQLiteDB - Cleaned up column type: \(tmp)")
 			if contains(intTypes, tmp) {
 				return SQLITE_INTEGER
 			}
@@ -369,7 +381,7 @@ class SQLiteDB {
 	}
 	
 	// Get column value
-	func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->Any {
+	func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->Any? {
 		// Integer
 		if type == SQLITE_INTEGER {
 			let val = sqlite3_column_int(stmt, index)
@@ -395,10 +407,10 @@ class SQLiteDB {
 		// Date
 		if type == SQLITE_DATE {
 			// Is this a text date
-			let txt = sqlite3_column_text(stmt, index)
+			let txt = UnsafePointer<Int8>(sqlite3_column_text(stmt, index))
 			if txt {
 				let cstr = CString(txt)
-				let buf = NSString.stringWithCString(cstr) as NSString
+				let buf = NSString(CString:cstr, encoding:NSUTF8StringEncoding) as NSString
 				let set = NSCharacterSet(charactersInString: "-:")
 				let range = buf.rangeOfCharacterFromSet(set)
 				if range.location != NSNotFound {
@@ -419,18 +431,10 @@ class SQLiteDB {
 			return dt
 		}
 		// If nothing works, return a string representation
-		let buf:UnsafePointer<CUnsignedChar> = sqlite3_column_text(stmt, index)
+		let buf = UnsafePointer<Int8>(sqlite3_column_text(stmt, index))
 		let cstr = CString(buf)
 		let val = String.fromCString(cstr)
+//		println("SQLiteDB - Got value: \(val)")
 		return val
 	}
 }
-
-/*
--(int)columnTypeAtIndex:(int)column inStatement:(sqlite3_stmt *)statement {
-	if ([dataType hasPrefix:@"UNSIGNED"]) {
-		dataType = [dataType substringWithRange:NSMakeRange(0, 8)];
-	}
-	dataType = [dataType stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-}
-*/
