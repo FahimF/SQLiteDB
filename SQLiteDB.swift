@@ -128,7 +128,7 @@ class SQLiteDB {
  
 	@required init() {
 		println("SQLiteDB - Init method")
-//		assert(Static.instance == nil, "Singleton already initialized!")
+		assert(!Static.instance, "Singleton already initialized!")
 		// Set queue
 		queue = dispatch_queue_create(QUEUE_LABLE, nil)
 		// Get path to DB in Documents directory
@@ -159,7 +159,6 @@ class SQLiteDB {
 	
 	deinit {
 		closeDatabase()
-		dispatch_release(queue)
 	}
  
 	func closeDatabase() {
