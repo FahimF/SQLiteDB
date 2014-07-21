@@ -35,6 +35,19 @@ In the above, `db` is a reference to the shared SQLite database instance and `SQ
 	db.execute("DELETE * FROM customers WHERE last_name='Smith'")
 ```
 
+* You can also create SQL statements with variable/dynamic values quite easily using Swift's string manipulation functionality. (And you do not need to use the SQLite bind API calls.)
+```swift
+	let name = "Smith"
+	db.execute("DELETE * FROM customers WHERE last_name='\(name)'")
+```
+
+* If your variable values contain quotes, remember to use the `esc` method to quote and escape the special characters in your input data. Otherwise, you will get a runtime error when trying to execute your SQL statements. (Note that the `esc` method encloses your data in quotes - so you don't have to enclose the final value in quotes when building your SQL statement.)
+```swift
+	let db = SQLiteDB.sharedInstance()
+	let name = db.esc("John's Name")
+	let sql = "SELECT * FROM clients WHERE name=\(name)"
+```
+
 Questions?
 ---
 * FAQ: [FAQs](https://github.com/FahimF/SQLiteDB/wiki/FAQs)
