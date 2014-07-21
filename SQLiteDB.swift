@@ -14,9 +14,10 @@ let SQLITE_DATE = SQLITE_NULL + 1
 extension String {
 	func positionOf(sub:String)->Int {
 		var pos = -1
-		let range = self.rangeOfString(sub)
-		if !range.isEmpty {
-			pos = distance(self.startIndex, range.startIndex)
+		if let range = self.rangeOfString(sub) {
+			if !range.isEmpty {
+				pos = distance(self.startIndex, range.startIndex)
+			}
 		}
 		return pos
 	}
@@ -108,8 +109,8 @@ class SQLRow {
 }
 
 class SQLiteDB {
-	let DB_NAME:CString = "data.db"
-	let QUEUE_LABLE:CString = "SQLiteDB"
+	let DB_NAME = "data.db"
+	let QUEUE_LABLE = "SQLiteDB"
 	var db:COpaquePointer = nil
 	var queue:dispatch_queue_t
 	
@@ -126,7 +127,7 @@ class SQLiteDB {
 		return Static.instance!
 	}
  
-	@required init() {
+	required init() {
 		println("SQLiteDB - Init method")
 		assert(!Static.instance, "Singleton already initialized!")
 		// Set queue
@@ -194,7 +195,7 @@ class SQLiteDB {
 	func execute(sql:String)->CInt {
 		var result:CInt = 0
 		dispatch_sync(queue) {
-			var cSql:CString = sql.bridgeToObjectiveC().UTF8String
+			var cSql = sql.bridgeToObjectiveC().UTF8String
 			var stmt:COpaquePointer = nil
 			// Prepare
 			result = sqlite3_prepare_v2(self.db, cSql, -1, &stmt, nil)
@@ -232,7 +233,7 @@ class SQLiteDB {
 	func query(sql:String)->[SQLRow] {
 		var rows = [SQLRow]()
 		dispatch_sync(queue) {
-			var cSql:CString = sql.bridgeToObjectiveC().cStringUsingEncoding(NSUTF8StringEncoding)
+			var cSql = sql.bridgeToObjectiveC().cStringUsingEncoding(NSUTF8StringEncoding)
 			var stmt:COpaquePointer = nil
 			var result:CInt = 0
 			// Prepare statement
@@ -295,7 +296,7 @@ class SQLiteDB {
 		println("SQLiteDB - Original string: \(str)")
 		let args = getVaList([str])
 		let cstr = sqlite3_vmprintf("%Q", args)
-		let sql = String.fromCString(CString(cstr))
+		let sql = String.fromCString(cstr)
 		sqlite3_free(cstr)
 		println("SQLiteDB - Escaped string: \(sql)")
 		return sql!
@@ -312,15 +313,8 @@ class SQLiteDB {
 	
 	// Return last SQL error
 	func lastSQLError()->String {
-		var err:CString? = nil
-		if dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) != QUEUE_LABLE {
-			dispatch_sync(queue) {
-				err = sqlite3_errmsg(self.db)
-			}
-		} else {
-			err = sqlite3_errmsg(self.db)
-		}
-		return (err ? NSString(CString:err!, encoding:NSUTF8StringEncoding) : "")
+		let buf = sqlite3_errmsg(self.db)
+		return NSString(CString:buf, encoding:NSUTF8StringEncoding)
 	}
 	
 	// Show alert with either supplied message or last error
@@ -341,10 +335,10 @@ class SQLiteDB {
 		let nullTypes = ["NULL"]
 		let realTypes = ["DECIMAL", "DOUBLE", "DOUBLE PRECISION", "FLOAT", "NUMERIC", "REAL"]
 		// Determine type of column - http://www.sqlite.org/c3ref/c_blob.html
-		let buf:CString? = sqlite3_column_decltype(stmt, index)
+		let buf = sqlite3_column_decltype(stmt, index)
 //		println("SQLiteDB - Got column type: \(buf)")
 		if (buf) {
-			var tmp = String.fromCString(buf!)!.uppercaseString
+			var tmp = String.fromCString(buf)!.uppercaseString
 			// Remove brackets
 			let pos = tmp.positionOf("(")
 			if pos > 0 {
@@ -408,14 +402,13 @@ class SQLiteDB {
 			// Is this a text date
 			let txt = UnsafePointer<Int8>(sqlite3_column_text(stmt, index))
 			if txt {
-				let cstr = CString(txt)
-				let buf = NSString(CString:cstr, encoding:NSUTF8StringEncoding) as NSString
+				let buf = NSString(CString:txt, encoding:NSUTF8StringEncoding) as NSString
 				let set = NSCharacterSet(charactersInString: "-:")
 				let range = buf.rangeOfCharacterFromSet(set)
 				if range.location != NSNotFound {
 					// Convert to time
 					var time:tm = tm(tm_sec: 0, tm_min: 0, tm_hour: 0, tm_mday: 0, tm_mon: 0, tm_year: 0, tm_wday: 0, tm_yday: 0, tm_isdst: 0, tm_gmtoff: 0, tm_zone:nil)
-					strptime(cstr, "%Y-%m-%d %H:%M:%S", &time)
+					strptime(txt, "%Y-%m-%d %H:%M:%S", &time)
 					time.tm_isdst = -1
 					let diff = NSTimeZone.localTimeZone().secondsFromGMT
 					let t = mktime(&time) + diff
@@ -431,8 +424,7 @@ class SQLiteDB {
 		}
 		// If nothing works, return a string representation
 		let buf = UnsafePointer<Int8>(sqlite3_column_text(stmt, index))
-		let cstr = CString(buf)
-		let val = String.fromCString(cstr)
+		let val = String.fromCString(buf)
 //		println("SQLiteDB - Got value: \(val)")
 		return val
 	}
