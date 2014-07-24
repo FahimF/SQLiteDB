@@ -11,47 +11,19 @@ import UIKit
 
 let SQLITE_DATE = SQLITE_NULL + 1
 
-extension String {
-	func positionOf(sub:String)->Int {
-		var pos = -1
-		if let range = self.rangeOfString(sub) {
-			if !range.isEmpty {
-				pos = distance(self.startIndex, range.startIndex)
-			}
-		}
-		return pos
-	}
-	
-	func subStringFrom(pos:Int)->String {
-		var substr = ""
-		let start = advance(self.startIndex, pos)
-		let range = start...self.endIndex
-		substr = self[range]
-		return substr
-	}
-	
-	func subStringTo(pos:Int)->String {
-		var substr = ""
-		let end = advance(self.startIndex, pos-1)
-		let range = self.startIndex...end
-		substr = self[range]
-		return substr
-	}
-}
-
 class SQLColumn {
 	var value:Any? = nil
 	var type:CInt = -1
 
 	init(value:Any, type:CInt) {
-		println("SQLiteDB - Initialize column with type: \(type), value: \(value)")
+//		println("SQLiteDB - Initialize column with type: \(type), value: \(value)")
 		self.value = value
 		self.type = type
 	}
 	
 	var string:String {
 		if value {
-			println("SQLiteDB - Column type: \(type), value: \(value)")
+//			println("SQLiteDB - Column type: \(type), value: \(value)")
 			if type == SQLITE_TEXT {
 				return value as String
 			} else {
@@ -121,14 +93,14 @@ class SQLiteDB {
 	
 	class func sharedInstance() -> SQLiteDB! {
 		dispatch_once(&Static.token) {
-			println("SQLiteDB - Dispatch once")
+//			println("SQLiteDB - Dispatch once")
 			Static.instance = self()
 		}
 		return Static.instance!
 	}
  
 	required init() {
-		println("SQLiteDB - Init method")
+//		println("SQLiteDB - Init method")
 		assert(!Static.instance, "Singleton already initialized!")
 		// Set queue
 		queue = dispatch_queue_create(QUEUE_LABLE, nil)
