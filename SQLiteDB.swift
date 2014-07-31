@@ -266,10 +266,13 @@ class SQLiteDB {
 	// SQL escape string - original version, does not work correctly at the moment
 	func esc2(str: String)->String {
 		println("SQLiteDB - Original string: \(str)")
-		let args = getVaList([str])
-		let cstr = sqlite3_vmprintf("%Q", args)
+		var buf = UnsafePointer<Int8>.alloc(100)
+		let args = getVaList([str as CVarArg])
+		let cstr = sqlite3_vsnprintf(100, buf, "%Q", args)
+//		let cstr = sqlite3_vmprintf("%Q", args)
+		println("SQLiteDB - Escaped result: \(cstr), buffer: \(buf.memory)")
 		let sql = String.fromCString(cstr)
-		sqlite3_free(cstr)
+//		sqlite3_free(cstr)
 		println("SQLiteDB - Escaped string: \(sql)")
 		return sql!
 	}
