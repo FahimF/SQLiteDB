@@ -22,7 +22,7 @@ Usage
 	let db = SQLiteDB.sharedInstance()
 ```
 
-* You can make an SQL query like this (the results are returned as an array of SQLRow objects):
+* You can make SQL queries using the `query` method (the results are returned as an array of `SQLRow` objects):
 ```swift
 	let data = db.query("SELECT * FROM customers WHERE name='John'")
 	let row = data[0]
@@ -32,7 +32,7 @@ Usage
 ```
 In the above, `db` is a reference to the shared SQLite database instance and `SQLRow` is a class defined to model a data row in SQLiteDB.
 
-* You can execute an SQL command (INSERT, DELETE, UPDATE etc.) like this:
+* You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 ```swift
 	db.execute("DELETE * FROM customers WHERE last_name='Smith'")
 ```

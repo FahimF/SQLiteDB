@@ -11,7 +11,7 @@ import UIKit
 
 let SQLITE_DATE = SQLITE_NULL + 1
 
-class SQLColumn {
+@objc class SQLColumn {
 	var value:Any? = nil
 	var type:CInt = -1
 
@@ -41,7 +41,7 @@ class SQLColumn {
 		}
 	}
 	
-	var double:Double {
+	var asDouble:Double {
 		if type == SQLITE_FLOAT {
 			return value as Double
 		} else {
@@ -66,7 +66,7 @@ class SQLColumn {
 	}
 }
 
-class SQLRow {
+@objc class SQLRow {
 	var data = Dictionary<String, SQLColumn>()
 	
 	subscript(key: String) -> SQLColumn? {
@@ -80,7 +80,7 @@ class SQLRow {
 	}
 }
 
-class SQLiteDB {
+@objc class SQLiteDB {
 	let DB_NAME = "data.db"
 	let QUEUE_LABLE = "SQLiteDB"
 	var db:COpaquePointer = nil
