@@ -9,7 +9,7 @@ Adding to Your Project
 ---
 * Create your SQLite database however you like, but name it `data.db` and then add the `data.db` file to your Xcode project. (If you want to name the database file something other than `data.db`, then change the `DB_NAME` constant in the `SQLiteDB` class accordingly.)
 
-**Note:** Remember to add the database file to your application target when you add it to the project. If you don't add the database file to a project target, it will not be copied to the device along with the other project resources.
+    **Note:** Remember to add the database file to your application target when you add it to the project. If you don't add the database file to a project target, it will not be copied to the device along with the other project resources.
 	
 * Add all of the included source files (except for README.md, of course) to your project.
 * If you don't have a bridging header file, use the included `Bridging-Header.h` file. If you already have a bridging header file, then copy the contents from the included `Bridging-Header.h` file in to your own bridging header file.
