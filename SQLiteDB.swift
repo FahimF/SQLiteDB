@@ -12,17 +12,17 @@ import UIKit
 let SQLITE_DATE = SQLITE_NULL + 1
 
 @objc class SQLColumn {
-	var value:Any? = nil
+	var value:AnyObject? = nil
 	var type:CInt = -1
 
-	init(value:Any, type:CInt) {
+	init(value:AnyObject, type:CInt) {
 //		println("SQLiteDB - Initialize column with type: \(type), value: \(value)")
 		self.value = value
 		self.type = type
 	}
 	
 	var string:String {
-		if value {
+		if value != nil {
 //			println("SQLiteDB - Column type: \(type), value: \(value)")
 			if type == SQLITE_TEXT {
 				return value as String
@@ -101,7 +101,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
  
 	required init() {
 //		println("SQLiteDB - Init method")
-		assert(!Static.instance, "Singleton already initialized!")
+		assert(Static.instance == nil, "Singleton already initialized!")
 		// Set queue
 		queue = dispatch_queue_create(QUEUE_LABLE, nil)
 		// Get path to DB in Documents directory
@@ -121,8 +121,8 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			}
 		}
 		// Open the DB
-		let cpath = path.bridgeToObjectiveC().cStringUsingEncoding(NSUTF8StringEncoding)
-		let error = sqlite3_open(cpath, &db)
+		let cpath = path.cStringUsingEncoding(NSUTF8StringEncoding)
+		let error = sqlite3_open(cpath!, &db)
 		if error != SQLITE_OK {
 			// Open failed, close DB and fail
 			println("SQLiteDB - failed to open DB!")
@@ -135,7 +135,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	}
  
 	func closeDatabase() {
-		if db {
+		if db != nil {
 			// Get launch count value
 			let ud = NSUserDefaults.standardUserDefaults()
 			var launchCount = ud.integerForKey("LaunchCount")
@@ -167,10 +167,10 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	func execute(sql:String)->CInt {
 		var result:CInt = 0
 		dispatch_sync(queue) {
-			var cSql = sql.bridgeToObjectiveC().UTF8String
+			var cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
 			var stmt:COpaquePointer = nil
 			// Prepare
-			result = sqlite3_prepare_v2(self.db, cSql, -1, &stmt, nil)
+			result = sqlite3_prepare_v2(self.db, cSql!, -1, &stmt, nil)
 			if result != SQLITE_OK {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(self.lastSQLError())"
@@ -205,11 +205,11 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	func query(sql:String)->[SQLRow] {
 		var rows = [SQLRow]()
 		dispatch_sync(queue) {
-			var cSql = sql.bridgeToObjectiveC().cStringUsingEncoding(NSUTF8StringEncoding)
+			var cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
 			var stmt:COpaquePointer = nil
 			var result:CInt = 0
 			// Prepare statement
-			result = sqlite3_prepare_v2(self.db, cSql, -1, &stmt, nil)
+			result = sqlite3_prepare_v2(self.db, cSql!, -1, &stmt, nil)
 			if result != SQLITE_OK {
 				sqlite3_finalize(stmt)
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(self.lastSQLError())"
@@ -230,9 +230,9 @@ let SQLITE_DATE = SQLITE_NULL + 1
 					for index in 0..<columnCount {
 						// Get column name
 						let name = sqlite3_column_name(stmt, index)
-						columnNames += String.fromCString(name)!
+						columnNames.append(String.fromCString(name)!)
 						// Get column type
-						columnTypes += self.getColumnType(index, stmt: stmt)
+						columnTypes.append(self.getColumnType(index, stmt: stmt))
 					}
 					fetchColumnInfo = false
 				}
@@ -241,7 +241,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 				for index in 0..<columnCount {
 					let key = columnNames[Int(index)]
 					let type = columnTypes[Int(index)]
-					if let val = self.getColumnValue(index, type: type, stmt: stmt) {
+					if let val:AnyObject = self.getColumnValue(index, type: type, stmt: stmt) {
 						let col = SQLColumn(value: val, type: type)
 						row[key] = col
 					}
@@ -266,11 +266,11 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	// SQL escape string - original version, does not work correctly at the moment
 	func esc2(str: String)->String {
 		println("SQLiteDB - Original string: \(str)")
-		var buf = UnsafePointer<Int8>.alloc(100)
-		let args = getVaList([str as CVarArg])
-		let cstr = sqlite3_vsnprintf(100, buf, "%Q", args)
-//		let cstr = sqlite3_vmprintf("%Q", args)
-		println("SQLiteDB - Escaped result: \(cstr), buffer: \(buf.memory)")
+		let args = getVaList([str as CVarArgType])
+//		var buf = UnsafePointer<Int8>.alloc(100)
+//		let cstr = sqlite3_vsnprintf(100, buf, "%Q", args)
+		let cstr = sqlite3_vmprintf("%Q", args)
+//		println("SQLiteDB - Escaped result: \(cstr), buffer: \(buf.memory)")
 		let sql = String.fromCString(cstr)
 //		sqlite3_free(cstr)
 		println("SQLiteDB - Escaped string: \(sql)")
@@ -294,7 +294,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	
 	// Show alert with either supplied message or last error
 	func alert(msg:String? = nil) {
-		var txt = msg ? msg! : lastSQLError()
+		var txt = msg != nil ? msg! : lastSQLError()
 		let alert = UIAlertView(title: "SQLiteDB", message: txt, delegate: nil, cancelButtonTitle: "OK")
 		alert.show()
 	}
@@ -312,7 +312,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		// Determine type of column - http://www.sqlite.org/c3ref/c_blob.html
 		let buf = sqlite3_column_decltype(stmt, index)
 //		println("SQLiteDB - Got column type: \(buf)")
-		if (buf) {
+		if buf != nil {
 			var tmp = String.fromCString(buf)!.uppercaseString
 			// Remove brackets
 			let pos = tmp.positionOf("(")
@@ -349,7 +349,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	}
 	
 	// Get column value
-	func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->Any? {
+	func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->AnyObject? {
 		// Integer
 		if type == SQLITE_INTEGER {
 			let val = sqlite3_column_int(stmt, index)
@@ -376,7 +376,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		if type == SQLITE_DATE {
 			// Is this a text date
 			let txt = UnsafePointer<Int8>(sqlite3_column_text(stmt, index))
-			if txt {
+			if txt != nil {
 				let buf = NSString(CString:txt, encoding:NSUTF8StringEncoding) as NSString
 				let set = NSCharacterSet(charactersInString: "-:")
 				let range = buf.rangeOfCharacterFromSet(set)
