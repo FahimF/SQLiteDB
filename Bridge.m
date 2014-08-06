@@ -15,7 +15,7 @@
 	if (!str || [str length] == 0) {
 		return @"''";
 	}
-	NSString *buf = @(sqlite3_mprintf("%q", [str cStringUsingEncoding:NSUTF8StringEncoding]));
+	NSString *buf = @(sqlite3_mprintf("%Q", [str cStringUsingEncoding:NSUTF8StringEncoding]));
 	return buf;
 }
 
