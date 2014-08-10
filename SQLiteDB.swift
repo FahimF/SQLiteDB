@@ -21,9 +21,114 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		self.type = type
 	}
 	
+	// New conversion functions
+	func asString()->String {
+		switch (type) {
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				return "\(value!)"
+			case SQLITE_TEXT:
+				return value as String
+			case SQLITE_BLOB:
+				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+				return str
+			case SQLITE_NULL:
+				return ""
+			case SQLITE_DATE:
+				let fmt = NSDateFormatter()
+				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+				return fmt.stringFromDate(value as NSDate)
+			default:
+				return ""
+		}
+	}
+
+	func asInt()->Int {
+		switch (type) {
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				return value as Int
+			case SQLITE_TEXT:
+				let str = value as NSString
+				return str.integerValue
+			case SQLITE_BLOB:
+				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+				return str.integerValue
+			case SQLITE_NULL:
+				return 0
+			case SQLITE_DATE:
+				return Int((value as NSDate).timeIntervalSince1970)
+			default:
+				return 0
+		}
+	}
+	
+	func asDouble()->Double {
+		switch (type) {
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				return value as Double
+			case SQLITE_TEXT:
+				let str = value as NSString
+				return str.doubleValue
+			case SQLITE_BLOB:
+				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+				return str.doubleValue
+			case SQLITE_NULL:
+				return 0.0
+			case SQLITE_DATE:
+				return (value as NSDate).timeIntervalSince1970
+			default:
+				return 0.0
+		}
+	}
+	
+	func asData()->NSData? {
+		switch (type) {
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				let str = "\(value)" as NSString
+				return str.dataUsingEncoding(NSUTF8StringEncoding)
+			case SQLITE_TEXT:
+				let str = value as NSString
+				return str.dataUsingEncoding(NSUTF8StringEncoding)
+			case SQLITE_BLOB:
+				return value as? NSData
+			case SQLITE_NULL:
+				return nil
+			case SQLITE_DATE:
+				let fmt = NSDateFormatter()
+				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+				let str = fmt.stringFromDate(value as NSDate)
+				return str.dataUsingEncoding(NSUTF8StringEncoding)
+			default:
+				return nil
+		}
+	}
+	
+	func asDate()->NSDate? {
+		switch (type) {
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				let tm = value as Double
+				return NSDate(timeIntervalSince1970:tm)
+			case SQLITE_TEXT:
+				let fmt = NSDateFormatter()
+				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+				return fmt.dateFromString(value as String)
+			case SQLITE_BLOB:
+				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+				let fmt = NSDateFormatter()
+				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+				return fmt.dateFromString(str)
+			case SQLITE_NULL:
+				return nil
+			case SQLITE_DATE:
+				return value as? NSDate
+			default:
+				return nil
+		}
+	}
+	
+	// Old variable functions - uncomment if you still need these
+/*
 	var string:String {
 		if value != nil {
-//			println("SQLiteDB - Column type: \(type), value: \(value)")
 			if type == SQLITE_TEXT {
 				return value as String
 			} else {
@@ -38,14 +143,6 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			return value as Int
 		} else {
 			return 0
-		}
-	}
-	
-	var asDouble:Double {
-		if type == SQLITE_FLOAT {
-			return value as Double
-		} else {
-			return 0.0
 		}
 	}
 	
@@ -64,6 +161,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			return nil
 		}
 	}
+*/
 }
 
 @objc class SQLRow {
@@ -269,12 +367,15 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		let args = getVaList([str as CVarArgType])
 //		var buf = UnsafePointer<Int8>.alloc(100)
 //		let cstr = sqlite3_vsnprintf(100, buf, "%Q", args)
-		let cstr = sqlite3_vmprintf("%Q", args)
 //		println("SQLiteDB - Escaped result: \(cstr), buffer: \(buf.memory)")
-		let sql = String.fromCString(cstr)
+		let cstr = sqlite3_vmprintf("%Q", args)
+		println("SQLiteDB - Escaped result: \(cstr), Raw: \(cstr.debugDescription)")
+		if let sql = String.fromCString(cstr) {
 //		sqlite3_free(cstr)
-		println("SQLiteDB - Escaped string: \(sql)")
-		return sql!
+			println("SQLiteDB - Escaped string: \(sql)")
+			return sql
+		}
+		return ""
 	}
 	
 	// Return last insert ID
@@ -343,6 +444,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			}
 			return SQLITE_TEXT
 		} else {
+			// For expressions and sub-queries
 			type = sqlite3_column_type(stmt, index)
 		}
 		return type

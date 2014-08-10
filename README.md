@@ -1,7 +1,7 @@
 SQLiteDB
 ========
 
-This is a basic SQLite wrapper for Swift. It is very simple at the moment and does not provide any advanced functionality. Additionally, it's not pure Swift at the moment due to some difficulties in making all of the necessary sqlite C API calls from Swift.
+This is a basic SQLite wrapper for Swift. It is very simple at the moment and does not provide any advanced functionality. Additionally, it's not pure Swift at the moment due to some difficulties in making all of the necessary SQLite C API calls from Swift.
 
 **Important** If you are new to Swift or have not bothered to read up on the Swift documentation, please do not contact me about Swift functionality. I just don't have the time to answer your queries about Swift. Of course, if you're willing to pay for my time though, feel free to contact me :)
 
@@ -30,10 +30,10 @@ Usage
 	let data = db.query("SELECT * FROM customers WHERE name='John'")
 	let row = data[0]
 	if let name = row["name"] {
-		textLabel.text = name.string
+		textLabel.text = name.asString()
 	}
 ```
-In the above, `db` is a reference to the shared SQLite database instance and `SQLRow` is a class defined to model a data row in SQLiteDB.
+In the above, `db` is a reference to the shared SQLite database instance and `SQLRow` is a class defined to model a data row in SQLiteDB. You can access a column from your query results by subscripting the `SQLRow` instance based on the column name. That returns an `SQLColumn` instance from which you can retrieve the data as a native data type by using the `asString`, `asInt`, `asDouble`, `asData`, and `asDate` methods provided by `SQLColumn`.
 
 * You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 ```swift
