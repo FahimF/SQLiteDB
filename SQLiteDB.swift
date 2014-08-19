@@ -210,12 +210,13 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		let fm = NSFileManager.defaultManager()
 		if !(fm.fileExistsAtPath(path)) {
 			// The database does not exist, so copy to Documents directory
-			let from = NSBundle.mainBundle().resourcePath.stringByAppendingPathComponent(dbName)
-			var error:NSError?
-			if !fm.copyItemAtPath(from, toPath: path, error: &error) {
-				println("SQLiteDB - failed to copy writable version of DB!")
-				println("Error - \(error!.localizedDescription)")
-				return
+			if let from = NSBundle.mainBundle().resourcePath?.stringByAppendingPathComponent(dbName) {
+				var error:NSError?
+				if !fm.copyItemAtPath(from, toPath: path, error: &error) {
+					println("SQLiteDB - failed to copy writable version of DB!")
+					println("Error - \(error!.localizedDescription)")
+					return
+				}
 			}
 		}
 		// Open the DB
