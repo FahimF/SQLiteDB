@@ -233,7 +233,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		closeDatabase()
 	}
  
-	func closeDatabase() {
+	private func closeDatabase() {
 		if db != nil {
 			// Get launch count value
 			let ud = NSUserDefaults.standardUserDefaults()
