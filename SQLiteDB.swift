@@ -11,6 +11,7 @@ import UIKit
 
 let SQLITE_DATE = SQLITE_NULL + 1
 
+// MARK:- SQLColumn Class - Column Definition
 @objc class SQLColumn {
 	var value:AnyObject? = nil
 	var type:CInt = -1
@@ -124,46 +125,9 @@ let SQLITE_DATE = SQLITE_NULL + 1
 				return nil
 		}
 	}
-	
-	// Old variable functions - uncomment if you still need these
-/*
-	var string:String {
-		if value != nil {
-			if type == SQLITE_TEXT {
-				return value as String
-			} else {
-				return ""
-			}
-		}
-		return ""
-	}
-	
-	var integer:Int {
-		if type == SQLITE_INTEGER {
-			return value as Int
-		} else {
-			return 0
-		}
-	}
-	
-	var data:NSData? {
-		if type == SQLITE_BLOB {
-			return value as? NSData
-		} else {
-			return nil
-		}
-	}
-	
-	var date:NSDate? {
-		if type == SQLITE_DATE {
-			return value as? NSDate
-		} else {
-			return nil
-		}
-	}
-*/
 }
 
+// MARK:- SQLRow Class - Row Definition
 @objc class SQLRow {
 	var data = Dictionary<String, SQLColumn>()
 	
@@ -178,6 +142,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	}
 }
 
+// MARK:- SQLiteDB Class - Does all the work
 @objc class SQLiteDB {
 	let DB_NAME = "data.db"
 	let QUEUE_LABLE = "SQLiteDB"
@@ -264,92 +229,35 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	
 	// Execute SQL and return result code
 	func execute(sql:String)->CInt {
+		return execute(sql, parameters:nil)
+	}
+	
+	// Execute SQL with parameters and return result code
+	func execute(sql:String, parameters:[AnyObject]?)->CInt {
 		var result:CInt = 0
 		dispatch_sync(queue) {
-			var cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
-			var stmt:COpaquePointer = nil
-			// Prepare
-			result = sqlite3_prepare_v2(self.db, cSql!, -1, &stmt, nil)
-			if result != SQLITE_OK {
-				sqlite3_finalize(stmt)
-				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(self.lastSQLError())"
-				println(msg)
-				self.alert(msg: msg)
-				return
+			let stmt = self.prepare(sql, params:parameters)
+			if stmt != nil {
+				result = self.execute(stmt, sql:sql)
 			}
-			// Step
-			result = sqlite3_step(stmt)
-			if result != SQLITE_OK && result != SQLITE_DONE {
-				sqlite3_finalize(stmt)
-				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(self.lastSQLError())"
-				println(msg)
-				self.alert(msg: msg)
-				return
-			}
-			// Is this an insert
-			if sql.uppercaseString.hasPrefix("INSERT ") {
-				// Known limitations: http://www.sqlite.org/c3ref/last_insert_rowid.html
-				let rid = sqlite3_last_insert_rowid(self.db)
-				result = CInt(rid)
-			} else {
-				result = 1
-			}
-			// Finalize
-			sqlite3_finalize(stmt)
 		}
 		return result
 	}
 	
 	// Run SQL query
-	func query(sql:String)->[SQLRow] {
-		var rows = [SQLRow]()
+	func query(sql:String)->[SQLRow]? {
+		return query(sql, parameters:nil)
+	}
+	
+	// Run SQL query with parameters
+	func query(sql:String, parameters:[AnyObject]?)->[SQLRow]? {
+		var rows:[SQLRow]? = nil
 		dispatch_sync(queue) {
-			var cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
-			var stmt:COpaquePointer = nil
-			var result:CInt = 0
-			// Prepare statement
-			result = sqlite3_prepare_v2(self.db, cSql!, -1, &stmt, nil)
-			if result != SQLITE_OK {
-				sqlite3_finalize(stmt)
-				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(self.lastSQLError())"
-				println(msg)
-				self.alert(msg: msg)
-				return
+			let stmt = self.prepare(sql, params:parameters)
+			if stmt != nil {
+				rows = self.query(stmt, sql:sql)
 			}
-			// Execute query
-			var fetchColumnInfo = true
-			var columnCount:CInt = 0
-			var columnNames = [String]()
-			var columnTypes = [CInt]()
-			result = sqlite3_step(stmt)
-			while result == SQLITE_ROW {
-				// Should we get column info?
-				if fetchColumnInfo {
-					columnCount = sqlite3_column_count(stmt)
-					for index in 0..<columnCount {
-						// Get column name
-						let name = sqlite3_column_name(stmt, index)
-						columnNames.append(String.fromCString(name)!)
-						// Get column type
-						columnTypes.append(self.getColumnType(index, stmt: stmt))
-					}
-					fetchColumnInfo = false
-				}
-				// Get row data for each column
-				var row = SQLRow()
-				for index in 0..<columnCount {
-					let key = columnNames[Int(index)]
-					let type = columnTypes[Int(index)]
-					if let val:AnyObject = self.getColumnValue(index, type: type, stmt: stmt) {
-						let col = SQLColumn(value: val, type: type)
-						row[key] = col
-					}
-				}
-				rows.append(row)
-				// Next row
-				result = sqlite3_step(stmt)
-			}
-			sqlite3_finalize(stmt)
+			
 		}
 		return rows
 	}
@@ -388,21 +296,109 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		return lid
 	}
 	
-	// Return last SQL error
+	// Return last SQL error - do not call from within here since the queue handling can result in a deadlock
 	func lastSQLError()->String {
 		let buf = sqlite3_errmsg(self.db)
 		return NSString(CString:buf, encoding:NSUTF8StringEncoding)
 	}
 	
 	// Show alert with either supplied message or last error
-	func alert(msg:String? = nil) {
-		var txt = msg != nil ? msg! : lastSQLError()
-		let alert = UIAlertView(title: "SQLiteDB", message: txt, delegate: nil, cancelButtonTitle: "OK")
-		alert.show()
+	func alert(msg:String) {
+		dispatch_async(dispatch_get_main_queue()) {
+			let alert = UIAlertView(title: "SQLiteDB", message:msg, delegate: nil, cancelButtonTitle: "OK")
+			alert.show()
+		}
+	}
+
+	// Private method which prepares the SQL
+	private func prepare(sql:String, params:[AnyObject]?)->COpaquePointer {
+		var stmt:COpaquePointer = nil
+		var cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
+		// Prepare
+		let result = sqlite3_prepare_v2(self.db, cSql!, -1, &stmt, nil)
+		if result != SQLITE_OK {
+			sqlite3_finalize(stmt)
+			let err = sqlite3_errmsg(self.db)
+			let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(err)"
+			println(msg)
+			self.alert(msg)
+			return nil
+		}
+		// Bind parameters, if any
+		if params != nil {
+			
+		}
+		return stmt
+	}
+	
+	// Private method which handles the actual execution of an SQL statement
+	private func execute(stmt:COpaquePointer, sql:String)->CInt {
+		// Step
+		var result = sqlite3_step(stmt)
+		if result != SQLITE_OK && result != SQLITE_DONE {
+			sqlite3_finalize(stmt)
+			let err = sqlite3_errmsg(self.db)
+			let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(err)"
+			println(msg)
+			self.alert(msg)
+			return 0
+		}
+		// Is this an insert
+		if sql.uppercaseString.hasPrefix("INSERT ") {
+			// Known limitations: http://www.sqlite.org/c3ref/last_insert_rowid.html
+			let rid = sqlite3_last_insert_rowid(self.db)
+			result = CInt(rid)
+		} else {
+			result = 1
+		}
+		// Finalize
+		sqlite3_finalize(stmt)
+		return result
+	}
+	
+	// Private method which handles the actual execution of an SQL query
+	private func query(stmt:COpaquePointer, sql:String)->[SQLRow]? {
+		var rows:[SQLRow]? = nil
+		var fetchColumnInfo = true
+		var columnCount:CInt = 0
+		var columnNames = [String]()
+		var columnTypes = [CInt]()
+		var result = sqlite3_step(stmt)
+		while result == SQLITE_ROW {
+			// Should we get column info?
+			if fetchColumnInfo {
+				columnCount = sqlite3_column_count(stmt)
+				for index in 0..<columnCount {
+					// Get column name
+					let name = sqlite3_column_name(stmt, index)
+					columnNames.append(String.fromCString(name)!)
+					// Get column type
+					columnTypes.append(self.getColumnType(index, stmt: stmt))
+				}
+				fetchColumnInfo = false
+				rows = [SQLRow]()
+			}
+			// Get row data for each column
+			var row = SQLRow()
+			for index in 0..<columnCount {
+				let key = columnNames[Int(index)]
+				let type = columnTypes[Int(index)]
+				if let val:AnyObject = self.getColumnValue(index, type: type, stmt: stmt) {
+//						println("Column type:\(type) with value:\(val)")
+					let col = SQLColumn(value: val, type: type)
+					row[key] = col
+				}
+			}
+			rows!.append(row)
+			// Next row
+			result = sqlite3_step(stmt)
+		}
+		sqlite3_finalize(stmt)
+		return rows
 	}
 	
 	// Get column type
-	func getColumnType(index:CInt, stmt:COpaquePointer)->CInt {
+	private func getColumnType(index:CInt, stmt:COpaquePointer)->CInt {
 		var type:CInt = 0
 		// Column types - http://www.sqlite.org/datatype3.html (section 2.2 table column 1)
 		let blobTypes = ["BINARY", "BLOB", "VARBINARY"]
@@ -452,7 +448,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	}
 	
 	// Get column value
-	func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->AnyObject? {
+	private func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->AnyObject? {
 		// Integer
 		if type == SQLITE_INTEGER {
 			let val = sqlite3_column_int(stmt, index)
