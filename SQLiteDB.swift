@@ -148,6 +148,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	let QUEUE_LABLE = "SQLiteDB"
 	var db:COpaquePointer = nil
 	var queue:dispatch_queue_t
+	var fmt = NSDateFormatter()
 	
 	struct Static {
 		static var instance:SQLiteDB? = nil
@@ -192,6 +193,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			println("SQLiteDB - failed to open DB!")
 			sqlite3_close(db)
 		}
+		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
 	}
 	
 	deinit {
@@ -227,13 +229,8 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		}
 	}
 	
-	// Execute SQL and return result code
-	func execute(sql:String)->CInt {
-		return execute(sql, parameters:nil)
-	}
-	
 	// Execute SQL with parameters and return result code
-	func execute(sql:String, parameters:[AnyObject]?)->CInt {
+	func execute(sql:String, parameters:[AnyObject]?=nil)->CInt {
 		var result:CInt = 0
 		dispatch_sync(queue) {
 			let stmt = self.prepare(sql, params:parameters)
@@ -244,62 +241,16 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		return result
 	}
 	
-	// Run SQL query
-	func query(sql:String)->[SQLRow]? {
-		return query(sql, parameters:nil)
-	}
-	
 	// Run SQL query with parameters
-	func query(sql:String, parameters:[AnyObject]?)->[SQLRow]? {
+	func query(sql:String, parameters:[AnyObject]?=nil)->[SQLRow]? {
 		var rows:[SQLRow]? = nil
 		dispatch_sync(queue) {
 			let stmt = self.prepare(sql, params:parameters)
 			if stmt != nil {
 				rows = self.query(stmt, sql:sql)
 			}
-			
 		}
 		return rows
-	}
-	
-	// SQL escape string - hacky version using an intermediate Objective-C class to make it work
-	func esc(str: String)->String {
-		println("SQLiteDB - Original string: \(str)")
-		let sql = Bridge.esc(str)
-		println("SQLiteDB - Escaped string: \(sql)")
-		return sql
-	}
-	
-	// SQL escape string - original version, does not work correctly at the moment
-	func esc2(str: String)->String {
-		println("SQLiteDB - Original string: \(str)")
-		let args = getVaList([str as CVarArgType])
-//		var buf = UnsafePointer<Int8>.alloc(100)
-//		let cstr = sqlite3_vsnprintf(100, buf, "%Q", args)
-//		println("SQLiteDB - Escaped result: \(cstr), buffer: \(buf.memory)")
-		let cstr = sqlite3_vmprintf("%Q", args)
-		println("SQLiteDB - Escaped result: \(cstr), Raw: \(cstr.debugDescription)")
-		if let sql = String.fromCString(cstr) {
-//		sqlite3_free(cstr)
-			println("SQLiteDB - Escaped string: \(sql)")
-			return sql
-		}
-		return ""
-	}
-	
-	// Return last insert ID
-	func lastInsertedRowID()->Int64 {
-		var lid:Int64 = 0
-		dispatch_sync(queue) {
-			lid = sqlite3_last_insert_rowid(self.db)
-		}
-		return lid
-	}
-	
-	// Return last SQL error - do not call from within here since the queue handling can result in a deadlock
-	func lastSQLError()->String {
-		let buf = sqlite3_errmsg(self.db)
-		return NSString(CString:buf, encoding:NSUTF8StringEncoding)
 	}
 	
 	// Show alert with either supplied message or last error
@@ -326,7 +277,57 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		}
 		// Bind parameters, if any
 		if params != nil {
-			
+			// Validate parameters
+			let cntParams = sqlite3_bind_parameter_count(stmt)
+			let cnt = CInt(params!.count)
+			if cntParams != cnt {
+				let msg = "SQLiteDB - failed to bind parameters, counts did not match. SQL: \(sql), Parameters: \(params)"
+				println(msg)
+				self.alert(msg)
+				return nil
+			}
+			var flag:CInt = 0
+			// Text values passed to a C-API do not work correctly if they are not marked as transient. All the following gymnastics is to get the correct value to pass
+			let intTran = UnsafeMutablePointer<Int>(bitPattern: -1)
+			let tranPointer = COpaquePointer(intTran)
+			let transient = CFunctionPointer<((UnsafeMutablePointer<()>) -> Void)>(tranPointer)
+			for ndx in 1...cnt {
+				println("Binding: \(params![ndx-1]) at Index: \(ndx)")
+				// Check for data types
+				if params![ndx-1] is String {
+					let txt = params![ndx-1].copy() as String
+					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, transient)
+				} else if params![ndx-1] is NSData {
+					let data = params![ndx-1].copy() as NSData
+					flag = sqlite3_bind_blob(stmt, CInt(ndx), data.bytes, -1, nil)
+				} else if params![ndx-1] is NSDate {
+					let date = params![ndx-1].copy() as NSDate
+					let txt = fmt.stringFromDate(date)
+					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, transient)
+				} else if params![ndx-1] is Int {
+					// Is this an integer or float
+					let vfl = params![ndx-1] as Double
+					let vint = Double(Int(vfl))
+					if vfl == vint {
+						// Integer
+						let val = params![ndx-1].copy() as Int
+						flag = sqlite3_bind_int(stmt, CInt(ndx), CInt(val))
+					} else {
+						// Float
+						let val = params![ndx-1].copy() as Double
+						flag = sqlite3_bind_double(stmt, CInt(ndx), CDouble(val))
+					}
+				}
+				// Check for errors
+				if flag != SQLITE_OK {
+					sqlite3_finalize(stmt)
+					let error = String.fromCString(sqlite3_errmsg(self.db))
+					let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
+					println(msg)
+					self.alert(msg)
+					return nil
+				}
+			}
 		}
 		return stmt
 	}
