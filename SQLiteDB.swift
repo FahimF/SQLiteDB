@@ -193,7 +193,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			println("SQLiteDB - failed to open DB!")
 			sqlite3_close(db)
 		}
-		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+		fmt.dateFormat = "YYYY-MM-dd HH:mm:ss"
 	}
 	
 	deinit {
@@ -292,16 +292,16 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			let tranPointer = COpaquePointer(intTran)
 			let transient = CFunctionPointer<((UnsafeMutablePointer<()>) -> Void)>(tranPointer)
 			for ndx in 1...cnt {
-				println("Binding: \(params![ndx-1]) at Index: \(ndx)")
+//				println("Binding: \(params![ndx-1]) at Index: \(ndx)")
 				// Check for data types
 				if params![ndx-1] is String {
-					let txt = params![ndx-1].copy() as String
+					let txt = params![ndx-1] as String
 					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, transient)
 				} else if params![ndx-1] is NSData {
-					let data = params![ndx-1].copy() as NSData
+					let data = params![ndx-1] as NSData
 					flag = sqlite3_bind_blob(stmt, CInt(ndx), data.bytes, -1, nil)
 				} else if params![ndx-1] is NSDate {
-					let date = params![ndx-1].copy() as NSDate
+					let date = params![ndx-1] as NSDate
 					let txt = fmt.stringFromDate(date)
 					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, transient)
 				} else if params![ndx-1] is Int {
@@ -310,11 +310,11 @@ let SQLITE_DATE = SQLITE_NULL + 1
 					let vint = Double(Int(vfl))
 					if vfl == vint {
 						// Integer
-						let val = params![ndx-1].copy() as Int
+						let val = params![ndx-1] as Int
 						flag = sqlite3_bind_int(stmt, CInt(ndx), CInt(val))
 					} else {
 						// Float
-						let val = params![ndx-1].copy() as Double
+						let val = params![ndx-1] as Double
 						flag = sqlite3_bind_double(stmt, CInt(ndx), CDouble(val))
 					}
 				}

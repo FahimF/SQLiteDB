@@ -1,4 +1,4 @@
-SQLiteDB
+SQLiteDB 
 ========
 
 This is a simple and lightweight SQLite wrapper for Swift. It allows all basic SQLite functionality including being able to bind values to parameters in an SQL statement. The framework does require an initial SQLite databae to be included in your project - it does not create the database for you via code.
