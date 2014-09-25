@@ -6,7 +6,11 @@
 //  Copyright (c) 2014 RookSoft Pte. Ltd. All rights reserved.
 //
 
+#if os(iOS)
 import UIKit
+#else
+import AppKit
+#endif
 
 extension String {
 	func positionOf(sub:String)->Int {
