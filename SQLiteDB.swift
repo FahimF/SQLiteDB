@@ -226,35 +226,40 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			// Clean DB
 			println("SQLiteDB - Optimize DB")
 			let sql = "VACUUM; ANALYZE"
-			if execute(sql) != SQLITE_OK {
-				println("SQLiteDB - Error cleaning DB")
-			}
-			sqlite3_close(db)
+			execute(sql, completion:{(result:CInt)->Void in
+				if result == 0 {
+					println("SQLiteDB - Error cleaning DB")
+					sqlite3_close(self.db)
+				}
+			})
 		}
 	}
 	
 	// Execute SQL with parameters and return result code
-	func execute(sql:String, parameters:[AnyObject]?=nil)->CInt {
-		var result:CInt = 0
-		dispatch_sync(queue) {
+	func execute(sql:String, parameters:[AnyObject]?=nil, completion:(CInt)->Void) {
+		dispatch_async(queue) {
 			let stmt = self.prepare(sql, params:parameters)
 			if stmt != nil {
-				result = self.execute(stmt, sql:sql)
+				let result = self.execute(stmt, sql:sql)
+				dispatch_async(dispatch_get_main_queue()) {
+					completion(result)
+				}
 			}
 		}
-		return result
 	}
 	
 	// Run SQL query with parameters
-	func query(sql:String, parameters:[AnyObject]?=nil)->[SQLRow]? {
-		var rows:[SQLRow]? = nil
-		dispatch_sync(queue) {
+	func query(sql:String, parameters:[AnyObject]?=nil, completion:([SQLRow]?)->Void) {
+		dispatch_async(queue) {
+			var rows:[SQLRow]? = nil
 			let stmt = self.prepare(sql, params:parameters)
 			if stmt != nil {
 				rows = self.query(stmt, sql:sql)
 			}
+			dispatch_async(dispatch_get_main_queue()) {
+				completion(rows)
+			}
 		}
-		return rows
 	}
 	
 	// Show alert with either supplied message or last error
@@ -358,10 +363,14 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			return 0
 		}
 		// Is this an insert
-		if sql.uppercaseString.hasPrefix("INSERT ") {
+		let upp = sql.uppercaseString
+		if upp.hasPrefix("INSERT ") {
 			// Known limitations: http://www.sqlite.org/c3ref/last_insert_rowid.html
 			let rid = sqlite3_last_insert_rowid(self.db)
 			result = CInt(rid)
+		} else if upp.hasPrefix("DELETE") || upp.hasPrefix("UPDATE") {
+			let cnt = sqlite3_changes(self.db)
+			result = CInt(cnt)
 		} else {
 			result = 1
 		}
