@@ -1,0 +1,412 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DD2D1CFC19D570FD00054DEF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD2D1CFB19D570FD00054DEF /* AppDelegate.swift */; };
+		DD2D1CFE19D570FD00054DEF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD2D1CFD19D570FD00054DEF /* ViewController.swift */; };
+		DD2D1D0019D570FD00054DEF /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD2D1CFF19D570FD00054DEF /* Images.xcassets */; };
+		DD2D1D0319D570FD00054DEF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD2D1D0119D570FD00054DEF /* Main.storyboard */; };
+		DD2D1D0F19D570FD00054DEF /* SQLiteDB_OSXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD2D1D0E19D570FD00054DEF /* SQLiteDB_OSXTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DD2D1D0919D570FD00054DEF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DD2D1CEE19D570FD00054DEF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD2D1CF519D570FD00054DEF;
+			remoteInfo = "SQLiteDB-OSX";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		DD2D1CF619D570FD00054DEF /* SQLiteDB-OSX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SQLiteDB-OSX.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD2D1CFA19D570FD00054DEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DD2D1CFB19D570FD00054DEF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		DD2D1CFD19D570FD00054DEF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		DD2D1CFF19D570FD00054DEF /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		DD2D1D0219D570FD00054DEF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		DD2D1D0819D570FD00054DEF /* SQLiteDB-OSXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SQLiteDB-OSXTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD2D1D0D19D570FD00054DEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DD2D1D0E19D570FD00054DEF /* SQLiteDB_OSXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDB_OSXTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DD2D1CF319D570FD00054DEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD2D1D0519D570FD00054DEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DD2D1CED19D570FD00054DEF = {
+			isa = PBXGroup;
+			children = (
+				DD2D1CF819D570FD00054DEF /* SQLiteDB-OSX */,
+				DD2D1D0B19D570FD00054DEF /* SQLiteDB-OSXTests */,
+				DD2D1CF719D570FD00054DEF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DD2D1CF719D570FD00054DEF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DD2D1CF619D570FD00054DEF /* SQLiteDB-OSX.app */,
+				DD2D1D0819D570FD00054DEF /* SQLiteDB-OSXTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DD2D1CF819D570FD00054DEF /* SQLiteDB-OSX */ = {
+			isa = PBXGroup;
+			children = (
+				DD2D1CFB19D570FD00054DEF /* AppDelegate.swift */,
+				DD2D1CFD19D570FD00054DEF /* ViewController.swift */,
+				DD2D1CFF19D570FD00054DEF /* Images.xcassets */,
+				DD2D1D0119D570FD00054DEF /* Main.storyboard */,
+				DD2D1CF919D570FD00054DEF /* Supporting Files */,
+			);
+			path = "SQLiteDB-OSX";
+			sourceTree = "<group>";
+		};
+		DD2D1CF919D570FD00054DEF /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				DD2D1CFA19D570FD00054DEF /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		DD2D1D0B19D570FD00054DEF /* SQLiteDB-OSXTests */ = {
+			isa = PBXGroup;
+			children = (
+				DD2D1D0E19D570FD00054DEF /* SQLiteDB_OSXTests.swift */,
+				DD2D1D0C19D570FD00054DEF /* Supporting Files */,
+			);
+			path = "SQLiteDB-OSXTests";
+			sourceTree = "<group>";
+		};
+		DD2D1D0C19D570FD00054DEF /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				DD2D1D0D19D570FD00054DEF /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DD2D1CF519D570FD00054DEF /* SQLiteDB-OSX */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD2D1D1219D570FD00054DEF /* Build configuration list for PBXNativeTarget "SQLiteDB-OSX" */;
+			buildPhases = (
+				DD2D1CF219D570FD00054DEF /* Sources */,
+				DD2D1CF319D570FD00054DEF /* Frameworks */,
+				DD2D1CF419D570FD00054DEF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "SQLiteDB-OSX";
+			productName = "SQLiteDB-OSX";
+			productReference = DD2D1CF619D570FD00054DEF /* SQLiteDB-OSX.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DD2D1D0719D570FD00054DEF /* SQLiteDB-OSXTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD2D1D1519D570FD00054DEF /* Build configuration list for PBXNativeTarget "SQLiteDB-OSXTests" */;
+			buildPhases = (
+				DD2D1D0419D570FD00054DEF /* Sources */,
+				DD2D1D0519D570FD00054DEF /* Frameworks */,
+				DD2D1D0619D570FD00054DEF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DD2D1D0A19D570FD00054DEF /* PBXTargetDependency */,
+			);
+			name = "SQLiteDB-OSXTests";
+			productName = "SQLiteDB-OSXTests";
+			productReference = DD2D1D0819D570FD00054DEF /* SQLiteDB-OSXTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DD2D1CEE19D570FD00054DEF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = "RookSoft Pte. Ltd.";
+				TargetAttributes = {
+					DD2D1CF519D570FD00054DEF = {
+						CreatedOnToolsVersion = 6.1;
+					};
+					DD2D1D0719D570FD00054DEF = {
+						CreatedOnToolsVersion = 6.1;
+						TestTargetID = DD2D1CF519D570FD00054DEF;
+					};
+				};
+			};
+			buildConfigurationList = DD2D1CF119D570FD00054DEF /* Build configuration list for PBXProject "SQLiteDB-OSX" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DD2D1CED19D570FD00054DEF;
+			productRefGroup = DD2D1CF719D570FD00054DEF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DD2D1CF519D570FD00054DEF /* SQLiteDB-OSX */,
+				DD2D1D0719D570FD00054DEF /* SQLiteDB-OSXTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DD2D1CF419D570FD00054DEF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD2D1D0019D570FD00054DEF /* Images.xcassets in Resources */,
+				DD2D1D0319D570FD00054DEF /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD2D1D0619D570FD00054DEF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DD2D1CF219D570FD00054DEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD2D1CFE19D570FD00054DEF /* ViewController.swift in Sources */,
+				DD2D1CFC19D570FD00054DEF /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD2D1D0419D570FD00054DEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD2D1D0F19D570FD00054DEF /* SQLiteDB_OSXTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DD2D1D0A19D570FD00054DEF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD2D1CF519D570FD00054DEF /* SQLiteDB-OSX */;
+			targetProxy = DD2D1D0919D570FD00054DEF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		DD2D1D0119D570FD00054DEF /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DD2D1D0219D570FD00054DEF /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		DD2D1D1019D570FD00054DEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		DD2D1D1119D570FD00054DEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DD2D1D1319D570FD00054DEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "SQLiteDB-OSX/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		DD2D1D1419D570FD00054DEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "SQLiteDB-OSX/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		DD2D1D1619D570FD00054DEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "SQLiteDB-OSXTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-OSX.app/Contents/MacOS/SQLiteDB-OSX";
+			};
+			name = Debug;
+		};
+		DD2D1D1719D570FD00054DEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "SQLiteDB-OSXTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-OSX.app/Contents/MacOS/SQLiteDB-OSX";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DD2D1CF119D570FD00054DEF /* Build configuration list for PBXProject "SQLiteDB-OSX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD2D1D1019D570FD00054DEF /* Debug */,
+				DD2D1D1119D570FD00054DEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DD2D1D1219D570FD00054DEF /* Build configuration list for PBXNativeTarget "SQLiteDB-OSX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD2D1D1319D570FD00054DEF /* Debug */,
+				DD2D1D1419D570FD00054DEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		DD2D1D1519D570FD00054DEF /* Build configuration list for PBXNativeTarget "SQLiteDB-OSXTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD2D1D1619D570FD00054DEF /* Debug */,
+				DD2D1D1719D570FD00054DEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DD2D1CEE19D570FD00054DEF /* Project object */;
+}
