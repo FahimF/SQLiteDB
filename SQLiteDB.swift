@@ -19,7 +19,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 @objc class SQLColumn {
 	var value:AnyObject? = nil
 	var type:CInt = -1
-
+	
 	init(value:AnyObject, type:CInt) {
 //		println("SQLiteDB - Initialize column with type: \(type), value: \(value)")
 		self.value = value
@@ -29,104 +29,104 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	// New conversion functions
 	func asString()->String {
 		switch (type) {
-			case SQLITE_INTEGER, SQLITE_FLOAT:
-				return "\(value!)"
-			case SQLITE_TEXT:
-				return value as String
-			case SQLITE_BLOB:
-				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-				return str
-			case SQLITE_NULL:
-				return ""
-			case SQLITE_DATE:
-				let fmt = NSDateFormatter()
-				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-				return fmt.stringFromDate(value as NSDate)
-			default:
-				return ""
+		case SQLITE_INTEGER, SQLITE_FLOAT:
+			return "\(value!)"
+		case SQLITE_TEXT:
+			return value as String
+		case SQLITE_BLOB:
+			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+			return str
+		case SQLITE_NULL:
+			return ""
+		case SQLITE_DATE:
+			let fmt = NSDateFormatter()
+			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+			return fmt.stringFromDate(value as NSDate)
+		default:
+			return ""
 		}
 	}
-
+	
 	func asInt()->Int {
 		switch (type) {
-			case SQLITE_INTEGER, SQLITE_FLOAT:
-				return value as Int
-			case SQLITE_TEXT:
-				let str = value as NSString
-				return str.integerValue
-			case SQLITE_BLOB:
-				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-				return str.integerValue
-			case SQLITE_NULL:
-				return 0
-			case SQLITE_DATE:
-				return Int((value as NSDate).timeIntervalSince1970)
-			default:
-				return 0
+		case SQLITE_INTEGER, SQLITE_FLOAT:
+			return value as Int
+		case SQLITE_TEXT:
+			let str = value as NSString
+			return str.integerValue
+		case SQLITE_BLOB:
+			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+			return str.integerValue
+		case SQLITE_NULL:
+			return 0
+		case SQLITE_DATE:
+			return Int((value as NSDate).timeIntervalSince1970)
+		default:
+			return 0
 		}
 	}
 	
 	func asDouble()->Double {
 		switch (type) {
-			case SQLITE_INTEGER, SQLITE_FLOAT:
-				return value as Double
-			case SQLITE_TEXT:
-				let str = value as NSString
-				return str.doubleValue
-			case SQLITE_BLOB:
-				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-				return str.doubleValue
-			case SQLITE_NULL:
-				return 0.0
-			case SQLITE_DATE:
-				return (value as NSDate).timeIntervalSince1970
-			default:
-				return 0.0
+		case SQLITE_INTEGER, SQLITE_FLOAT:
+			return value as Double
+		case SQLITE_TEXT:
+			let str = value as NSString
+			return str.doubleValue
+		case SQLITE_BLOB:
+			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+			return str.doubleValue
+		case SQLITE_NULL:
+			return 0.0
+		case SQLITE_DATE:
+			return (value as NSDate).timeIntervalSince1970
+		default:
+			return 0.0
 		}
 	}
 	
 	func asData()->NSData? {
 		switch (type) {
-			case SQLITE_INTEGER, SQLITE_FLOAT:
-				let str = "\(value)" as NSString
-				return str.dataUsingEncoding(NSUTF8StringEncoding)
-			case SQLITE_TEXT:
-				let str = value as NSString
-				return str.dataUsingEncoding(NSUTF8StringEncoding)
-			case SQLITE_BLOB:
-				return value as? NSData
-			case SQLITE_NULL:
-				return nil
-			case SQLITE_DATE:
-				let fmt = NSDateFormatter()
-				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-				let str = fmt.stringFromDate(value as NSDate)
-				return str.dataUsingEncoding(NSUTF8StringEncoding)
-			default:
-				return nil
+		case SQLITE_INTEGER, SQLITE_FLOAT:
+			let str = "\(value)" as NSString
+			return str.dataUsingEncoding(NSUTF8StringEncoding)
+		case SQLITE_TEXT:
+			let str = value as NSString
+			return str.dataUsingEncoding(NSUTF8StringEncoding)
+		case SQLITE_BLOB:
+			return value as? NSData
+		case SQLITE_NULL:
+			return nil
+		case SQLITE_DATE:
+			let fmt = NSDateFormatter()
+			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+			let str = fmt.stringFromDate(value as NSDate)
+			return str.dataUsingEncoding(NSUTF8StringEncoding)
+		default:
+			return nil
 		}
 	}
 	
 	func asDate()->NSDate? {
 		switch (type) {
-			case SQLITE_INTEGER, SQLITE_FLOAT:
-				let tm = value as Double
-				return NSDate(timeIntervalSince1970:tm)
-			case SQLITE_TEXT:
-				let fmt = NSDateFormatter()
-				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-				return fmt.dateFromString(value as String)
-			case SQLITE_BLOB:
-				let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-				let fmt = NSDateFormatter()
-				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-				return fmt.dateFromString(str)
-			case SQLITE_NULL:
-				return nil
-			case SQLITE_DATE:
-				return value as? NSDate
-			default:
-				return nil
+		case SQLITE_INTEGER, SQLITE_FLOAT:
+			let tm = value as Double
+			return NSDate(timeIntervalSince1970:tm)
+		case SQLITE_TEXT:
+			let fmt = NSDateFormatter()
+			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+			return fmt.dateFromString(value as String)
+		case SQLITE_BLOB:
+			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+			let fmt = NSDateFormatter()
+			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+			return fmt.dateFromString(str)
+		case SQLITE_NULL:
+			return nil
+		case SQLITE_DATE:
+			return value as? NSDate
+		default:
+			return nil
 		}
 	}
 }
@@ -226,40 +226,35 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			// Clean DB
 			println("SQLiteDB - Optimize DB")
 			let sql = "VACUUM; ANALYZE"
-			execute(sql, completion:{(result:CInt)->Void in
-				if result == 0 {
-					println("SQLiteDB - Error cleaning DB")
-					sqlite3_close(self.db)
-				}
-			})
+			if execute(sql) != SQLITE_OK {
+				println("SQLiteDB - Error cleaning DB")
+			}
+			sqlite3_close(db)
 		}
 	}
 	
 	// Execute SQL with parameters and return result code
-	func execute(sql:String, parameters:[AnyObject]?=nil, completion:(CInt)->Void) {
-		dispatch_async(queue) {
+	func execute(sql:String, parameters:[AnyObject]?=nil)->CInt {
+		var result:CInt = 0
+		dispatch_sync(queue) {
 			let stmt = self.prepare(sql, params:parameters)
 			if stmt != nil {
-				let result = self.execute(stmt, sql:sql)
-				dispatch_async(dispatch_get_main_queue()) {
-					completion(result)
-				}
+				result = self.execute(stmt, sql:sql)
 			}
 		}
+		return result
 	}
 	
 	// Run SQL query with parameters
-	func query(sql:String, parameters:[AnyObject]?=nil, completion:([SQLRow]?)->Void) {
-		dispatch_async(queue) {
-			var rows:[SQLRow]? = nil
+	func query(sql:String, parameters:[AnyObject]?=nil)->[SQLRow] {
+		var rows = [SQLRow]()
+		dispatch_sync(queue) {
 			let stmt = self.prepare(sql, params:parameters)
 			if stmt != nil {
 				rows = self.query(stmt, sql:sql)
 			}
-			dispatch_async(dispatch_get_main_queue()) {
-				completion(rows)
-			}
 		}
+		return rows
 	}
 	
 	// Show alert with either supplied message or last error
@@ -268,7 +263,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 #if os(iOS)
 			let alert = UIAlertView(title: "SQLiteDB", message:msg, delegate: nil, cancelButtonTitle: "OK")
 			alert.show()
-#else
+			#else
 			let alert = NSAlert()
 			alert.addButtonWithTitle("Ok")
 			alert.messageText = "SQLiteDB"
@@ -278,7 +273,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 #endif
 		}
 	}
-
+	
 	// Private method which prepares the SQL
 	private func prepare(sql:String, params:[AnyObject]?)->COpaquePointer {
 		var stmt:COpaquePointer = nil
@@ -380,8 +375,8 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	}
 	
 	// Private method which handles the actual execution of an SQL query
-	private func query(stmt:COpaquePointer, sql:String)->[SQLRow]? {
-		var rows:[SQLRow]? = nil
+	private func query(stmt:COpaquePointer, sql:String)->[SQLRow] {
+		var rows = [SQLRow]()
 		var fetchColumnInfo = true
 		var columnCount:CInt = 0
 		var columnNames = [String]()
@@ -399,7 +394,6 @@ let SQLITE_DATE = SQLITE_NULL + 1
 					columnTypes.append(self.getColumnType(index, stmt: stmt))
 				}
 				fetchColumnInfo = false
-				rows = [SQLRow]()
 			}
 			// Get row data for each column
 			var row = SQLRow()
@@ -412,7 +406,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 					row[key] = col
 				}
 			}
-			rows!.append(row)
+			rows.append(row)
 			// Next row
 			result = sqlite3_step(stmt)
 		}

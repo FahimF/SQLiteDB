@@ -10,7 +10,7 @@ import UIKit
 
 class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 	@IBOutlet var table:UITableView!
-	var data:[SQLRow]? = nil
+	var data = [SQLRow]()
 	let db = SQLiteDB.sharedInstance()
 	
 	override func viewDidLoad() {
@@ -19,10 +19,9 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
-		db.query("SELECT * FROM tasks ORDER BY task ASC", completion:{(arr:[SQLRow]?)->Void in
-			self.data = arr
-			self.table.reloadData()
-		})
+		let arr = db.query("SELECT * FROM tasks ORDER BY task ASC")
+		data = arr
+		table.reloadData()
 	}
 	
 	override func didReceiveMemoryWarning() {
@@ -31,16 +30,13 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 
 	// UITableView Delegates
 	func tableView(tv:UITableView, numberOfRowsInSection section:Int) -> Int {
-		var cnt = 0
-		if data != nil {
-			cnt = data!.count
-		}
+		let cnt = data.count
 		return cnt
 	}
 	
 	func tableView(tv:UITableView, cellForRowAtIndexPath indexPath:NSIndexPath) -> UITableViewCell {
 		let cell:UITableViewCell = tv.dequeueReusableCellWithIdentifier("TaskCell") as UITableViewCell
-		let row = data![indexPath.row]
+		let row = data[indexPath.row]
 		if let task = row["task"] {
 			cell.textLabel?.text = task.asString()
 		}
