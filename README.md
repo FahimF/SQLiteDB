@@ -30,40 +30,30 @@ Usage
 
 * You can make SQL queries using the `query` method (the results are returned as an array of `SQLRow` objects):
 ```swift
-	db.query("SELECT * FROM customers WHERE name='John'", completion:{
-	   (data:[SQLRow]?)->Void in
-		let row = data[0]
-		if let name = row["name"] {
-			textLabel.text = name.asString()
-		}
-	})
+	let data = db.query("SELECT * FROM customers WHERE name='John'")
+	let row = data[0]
+	if let name = row["name"] {
+		textLabel.text = name.asString()
+	}
 ```
 In the above, `db` is a reference to the shared SQLite database instance and `SQLRow` is a class defined to model a data row in SQLiteDB. You can access a column from your query results by subscripting the `SQLRow` instance based on the column name. That returns an `SQLColumn` instance from which you can retrieve the data as a native data type by using the `asString`, `asInt`, `asDouble`, `asData`, and `asDate` methods provided by `SQLColumn`.
 
 * If you'd prefer to bind values to your query instead of creating the full SQL string, then you can execute the above SQL also like this:
 ```swift
 	let name = "John"
-	db.query("SELECT * FROM customers WHERE name=?", parameters:[name], completion:{
-	    (data:[SQLRow]?)->Void in
-	    // Do something with fetched data
-	})
+	let data = db.query("SELECT * FROM customers WHERE name=?", parameters:[name])
 ```
 
 * Of course, you can also construct the above SQL query by using Swift's string manipulation functionality as well (without using the SQLite bind functionality):
 ```swift
 	let name = "John"
-	db.query("SELECT * FROM customers WHERE name='\(name)'", parameters:[name], completion:{
-	    (data:[SQLRow]?)->Void in
-	    // Do something with fetched data
-	})
+	let data = db.query("SELECT * FROM customers WHERE name='\(name)'", parameters:[name])
 ```
 
 * You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 ```swift
-	db.execute("DELETE * FROM customers WHERE last_name='Smith'", completion:{
-	    (result:CInt)->Void in
-	    // If the result is 0 then the operation failed
-	})
+	let result = db.execute("DELETE * FROM customers WHERE last_name='Smith'")
+	// If the result is 0 then the operation failed
 ```
 
 * The `esc` method which was previously available in SQLiteDB is no longer there. So, for instance, if you need to escape strings with embedded quotes, you should use the SQLite parameter binding functionality as shown above.
