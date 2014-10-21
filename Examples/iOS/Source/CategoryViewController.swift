@@ -34,7 +34,7 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 		let cell:UITableViewCell = tv.dequeueReusableCellWithIdentifier("CategoryCell") as UITableViewCell
 		let row = data[indexPath.row]
 		if let name = row["name"] {
-			cell.textLabel?.text = name.asString()
+			cell.textLabel.text = name.asString()
 		}
 		return cell
 	}

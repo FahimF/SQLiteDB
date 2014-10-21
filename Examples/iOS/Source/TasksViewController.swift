@@ -38,7 +38,7 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 		let cell:UITableViewCell = tv.dequeueReusableCellWithIdentifier("TaskCell") as UITableViewCell
 		let row = data[indexPath.row]
 		if let task = row["task"] {
-			cell.textLabel?.text = task.asString()
+			cell.textLabel.text = task.asString()
 		}
 		return cell
 	}

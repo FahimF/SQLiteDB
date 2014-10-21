@@ -29,104 +29,141 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	// New conversion functions
 	func asString()->String {
 		switch (type) {
-		case SQLITE_INTEGER, SQLITE_FLOAT:
-			return "\(value!)"
-		case SQLITE_TEXT:
-			return value as String
-		case SQLITE_BLOB:
-			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-			return str
-		case SQLITE_NULL:
-			return ""
-		case SQLITE_DATE:
-			let fmt = NSDateFormatter()
-			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-			return fmt.stringFromDate(value as NSDate)
-		default:
-			return ""
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				return "\(value!)"
+				
+			case SQLITE_TEXT:
+				return value as String
+				
+			case SQLITE_BLOB:
+				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
+					return str
+				} else {
+					return ""
+				}
+			
+			case SQLITE_NULL:
+				return ""
+				
+			case SQLITE_DATE:
+				let fmt = NSDateFormatter()
+				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+				return fmt.stringFromDate(value as NSDate)
+				
+			default:
+				return ""
 		}
 	}
 	
 	func asInt()->Int {
 		switch (type) {
-		case SQLITE_INTEGER, SQLITE_FLOAT:
-			return value as Int
-		case SQLITE_TEXT:
-			let str = value as NSString
-			return str.integerValue
-		case SQLITE_BLOB:
-			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-			return str.integerValue
-		case SQLITE_NULL:
-			return 0
-		case SQLITE_DATE:
-			return Int((value as NSDate).timeIntervalSince1970)
-		default:
-			return 0
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				return value as Int
+				
+			case SQLITE_TEXT:
+				let str = value as NSString
+				return str.integerValue
+				
+			case SQLITE_BLOB:
+				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
+					return str.integerValue
+				} else {
+					return 0
+				}
+				
+			case SQLITE_NULL:
+				return 0
+				
+			case SQLITE_DATE:
+				return Int((value as NSDate).timeIntervalSince1970)
+				
+			default:
+				return 0
 		}
 	}
 	
 	func asDouble()->Double {
 		switch (type) {
-		case SQLITE_INTEGER, SQLITE_FLOAT:
-			return value as Double
-		case SQLITE_TEXT:
-			let str = value as NSString
-			return str.doubleValue
-		case SQLITE_BLOB:
-			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-			return str.doubleValue
-		case SQLITE_NULL:
-			return 0.0
-		case SQLITE_DATE:
-			return (value as NSDate).timeIntervalSince1970
-		default:
-			return 0.0
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				return value as Double
+			
+			case SQLITE_TEXT:
+				let str = value as NSString
+				return str.doubleValue
+			
+			case SQLITE_BLOB:
+				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
+					return str.doubleValue
+				} else {
+					return 0.0
+				}
+			
+			case SQLITE_NULL:
+				return 0.0
+			
+			case SQLITE_DATE:
+				return (value as NSDate).timeIntervalSince1970
+			
+			default:
+				return 0.0
 		}
 	}
 	
 	func asData()->NSData? {
 		switch (type) {
-		case SQLITE_INTEGER, SQLITE_FLOAT:
-			let str = "\(value)" as NSString
-			return str.dataUsingEncoding(NSUTF8StringEncoding)
-		case SQLITE_TEXT:
-			let str = value as NSString
-			return str.dataUsingEncoding(NSUTF8StringEncoding)
-		case SQLITE_BLOB:
-			return value as? NSData
-		case SQLITE_NULL:
-			return nil
-		case SQLITE_DATE:
-			let fmt = NSDateFormatter()
-			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-			let str = fmt.stringFromDate(value as NSDate)
-			return str.dataUsingEncoding(NSUTF8StringEncoding)
-		default:
-			return nil
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				let str = "\(value)" as NSString
+				return str.dataUsingEncoding(NSUTF8StringEncoding)
+			
+			case SQLITE_TEXT:
+				let str = value as NSString
+				return str.dataUsingEncoding(NSUTF8StringEncoding)
+			
+			case SQLITE_BLOB:
+				return value as? NSData
+			
+			case SQLITE_NULL:
+				return nil
+			
+			case SQLITE_DATE:
+				let fmt = NSDateFormatter()
+				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+				let str = fmt.stringFromDate(value as NSDate)
+				return str.dataUsingEncoding(NSUTF8StringEncoding)
+			
+			default:
+				return nil
 		}
 	}
 	
 	func asDate()->NSDate? {
 		switch (type) {
-		case SQLITE_INTEGER, SQLITE_FLOAT:
-			let tm = value as Double
-			return NSDate(timeIntervalSince1970:tm)
-		case SQLITE_TEXT:
-			let fmt = NSDateFormatter()
-			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-			return fmt.dateFromString(value as String)
-		case SQLITE_BLOB:
-			let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
-			let fmt = NSDateFormatter()
-			fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-			return fmt.dateFromString(str)
-		case SQLITE_NULL:
-			return nil
-		case SQLITE_DATE:
-			return value as? NSDate
-		default:
-			return nil
+			case SQLITE_INTEGER, SQLITE_FLOAT:
+				let tm = value as Double
+				return NSDate(timeIntervalSince1970:tm)
+			
+			case SQLITE_TEXT:
+				let fmt = NSDateFormatter()
+				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+				return fmt.dateFromString(value as String)
+			
+			case SQLITE_BLOB:
+				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
+					let fmt = NSDateFormatter()
+					fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+					return fmt.dateFromString(str)
+				} else {
+					return nil
+				}
+			
+			case SQLITE_NULL:
+				return nil
+			
+			case SQLITE_DATE:
+				return value as? NSDate
+			
+			default:
+				return nil
 		}
 	}
 }
@@ -364,7 +401,10 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			let rid = sqlite3_last_insert_rowid(self.db)
 			result = CInt(rid)
 		} else if upp.hasPrefix("DELETE") || upp.hasPrefix("UPDATE") {
-			let cnt = sqlite3_changes(self.db)
+			var cnt = sqlite3_changes(self.db)
+			if cnt == 0 {
+				cnt++
+			}
 			result = CInt(cnt)
 		} else {
 			result = 1
@@ -493,19 +533,20 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			// Is this a text date
 			let txt = UnsafePointer<Int8>(sqlite3_column_text(stmt, index))
 			if txt != nil {
-				let buf = NSString(CString:txt, encoding:NSUTF8StringEncoding) as NSString
-				let set = NSCharacterSet(charactersInString: "-:")
-				let range = buf.rangeOfCharacterFromSet(set)
-				if range.location != NSNotFound {
-					// Convert to time
-					var time:tm = tm(tm_sec: 0, tm_min: 0, tm_hour: 0, tm_mday: 0, tm_mon: 0, tm_year: 0, tm_wday: 0, tm_yday: 0, tm_isdst: 0, tm_gmtoff: 0, tm_zone:nil)
-					strptime(txt, "%Y-%m-%d %H:%M:%S", &time)
-					time.tm_isdst = -1
-					let diff = NSTimeZone.localTimeZone().secondsFromGMT
-					let t = mktime(&time) + diff
-					let ti = NSTimeInterval(t)
-					let val = NSDate(timeIntervalSince1970:ti)
-					return val
+				if let buf = NSString(CString:txt, encoding:NSUTF8StringEncoding) {
+					let set = NSCharacterSet(charactersInString: "-:")
+					let range = buf.rangeOfCharacterFromSet(set)
+					if range.location != NSNotFound {
+						// Convert to time
+						var time:tm = tm(tm_sec: 0, tm_min: 0, tm_hour: 0, tm_mday: 0, tm_mon: 0, tm_year: 0, tm_wday: 0, tm_yday: 0, tm_isdst: 0, tm_gmtoff: 0, tm_zone:nil)
+						strptime(txt, "%Y-%m-%d %H:%M:%S", &time)
+						time.tm_isdst = -1
+						let diff = NSTimeZone.localTimeZone().secondsFromGMT
+						let t = mktime(&time) + diff
+						let ti = NSTimeInterval(t)
+						let val = NSDate(timeIntervalSince1970:ti)
+						return val
+					}
 				}
 			}
 			// If not a text date, then it's a time interval
