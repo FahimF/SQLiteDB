@@ -319,10 +319,11 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		let result = sqlite3_prepare_v2(self.db, cSql!, -1, &stmt, nil)
 		if result != SQLITE_OK {
 			sqlite3_finalize(stmt)
-			let err = sqlite3_errmsg(self.db)
-			let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(err)"
-			println(msg)
-			self.alert(msg)
+			if let error = String.fromCString(sqlite3_errmsg(self.db)) {
+				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(error)"
+				println(msg)
+				self.alert(msg)
+			}
 			return nil
 		}
 		// Bind parameters, if any
@@ -371,10 +372,11 @@ let SQLITE_DATE = SQLITE_NULL + 1
 				// Check for errors
 				if flag != SQLITE_OK {
 					sqlite3_finalize(stmt)
-					let error = String.fromCString(sqlite3_errmsg(self.db))
-					let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
-					println(msg)
-					self.alert(msg)
+					if let error = String.fromCString(sqlite3_errmsg(self.db)) {
+						let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
+						println(msg)
+						self.alert(msg)
+					}
 					return nil
 				}
 			}
@@ -388,10 +390,11 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		var result = sqlite3_step(stmt)
 		if result != SQLITE_OK && result != SQLITE_DONE {
 			sqlite3_finalize(stmt)
-			let err = sqlite3_errmsg(self.db)
-			let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(err)"
-			println(msg)
-			self.alert(msg)
+			if let err = String.fromCString(sqlite3_errmsg(self.db)) {
+				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(err)"
+				println(msg)
+				self.alert(msg)
+			}
 			return 0
 		}
 		// Is this an insert

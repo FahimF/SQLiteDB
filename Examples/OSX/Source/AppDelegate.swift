@@ -10,8 +10,7 @@ import Cocoa
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
-
-
+	let db = SQLiteDB.sharedInstance()
 
 	func applicationDidFinishLaunching(aNotification: NSNotification?) {
 		// Insert code here to initialize your application
