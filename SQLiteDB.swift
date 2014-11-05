@@ -81,6 +81,27 @@ let SQLITE_DATE = SQLITE_NULL + 1
 				return 0
 		}
 	}
+    
+    
+    func asInt64()->Int64 {
+        switch (type) {
+        case SQLITE_INTEGER, SQLITE_FLOAT:
+            return (value as NSNumber).longLongValue
+            
+        case SQLITE_TEXT:
+            let str = value as NSString
+            return str.longLongValue
+        case SQLITE_BLOB:
+            let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding)
+            return str!.longLongValue
+        case SQLITE_NULL:
+            return 0
+        case SQLITE_DATE:
+            return Int64((value as NSDate).timeIntervalSince1970)
+        default:
+            return 0
+        }
+    }
 	
 	func asDouble()->Double {
 		switch (type) {
@@ -511,8 +532,8 @@ let SQLITE_DATE = SQLITE_NULL + 1
 	private func getColumnValue(index:CInt, type:CInt, stmt:COpaquePointer)->AnyObject? {
 		// Integer
 		if type == SQLITE_INTEGER {
-			let val = sqlite3_column_int(stmt, index)
-			return Int(val)
+			let val = sqlite3_column_int64(stmt, index)
+            return NSNumber(longLong: val)
 		}
 		// Float
 		if type == SQLITE_FLOAT {
