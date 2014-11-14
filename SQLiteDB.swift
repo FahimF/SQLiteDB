@@ -473,9 +473,10 @@ let SQLITE_DATE = SQLITE_NULL + 1
 		if buf != nil {
 			var tmp = String.fromCString(buf)!.uppercaseString
 			// Remove brackets
-			let pos = tmp.positionOf("(")
-			if pos > 0 {
-				tmp = tmp.subStringTo(pos)
+			if let charIdx = find(tmp, "(") {
+				if distance(tmp.startIndex, charIdx) > 0 {
+					tmp = tmp.substringToIndex(charIdx)
+				}
 			}
 			// Remove unsigned?
 			// Remove spaces
