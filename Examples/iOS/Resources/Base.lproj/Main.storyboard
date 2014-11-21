@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6245" systemVersion="14A361c" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="49e-Tb-3d3">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="49e-Tb-3d3">
     <dependencies>
-        <deployment defaultVersion="1808" identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6238"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6246"/>
     </dependencies>
     <scenes>
         <!--Tasks-->
         <scene sceneID="hNz-n2-bh7">
             <objects>
-                <viewController id="9pv-A4-QxB" customClass="TasksViewController" customModule="TasksGalore" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="9pv-A4-QxB" customClass="TasksViewController" customModule="SQLiteDB_iOS" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="Ia1-K6-d13"/>
                         <viewControllerLayoutGuide type="bottom" id="4ug-Mw-9AY"/>
@@ -75,7 +75,7 @@
         <!--Add Task-->
         <scene sceneID="UYF-TZ-eGg">
             <objects>
-                <tableViewController id="JNS-0t-a45" customClass="AddTaskViewController" customModule="TasksGalore" customModuleProvider="target" sceneMemberID="viewController">
+                <tableViewController id="JNS-0t-a45" customClass="AddTaskViewController" customModule="SQLiteDB_iOS" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="static" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="a9B-9g-QBL">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -171,7 +171,7 @@
         <!--Add Category-->
         <scene sceneID="V5w-uR-L2k">
             <objects>
-                <tableViewController id="5tM-ki-yPN" customClass="AddCategoryViewController" customModule="TasksGalore" customModuleProvider="target" sceneMemberID="viewController">
+                <tableViewController id="5tM-ki-yPN" customClass="AddCategoryViewController" customModule="SQLiteDB_iOS" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="static" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="YDO-oe-GUx">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -218,8 +218,15 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Add Category" id="aZi-oU-oTO">
-                        <barButtonItem key="rightBarButtonItem" systemItem="save" id="jdS-VU-4jx"/>
+                        <barButtonItem key="rightBarButtonItem" systemItem="save" id="jdS-VU-4jx">
+                            <connections>
+                                <action selector="save" destination="5tM-ki-yPN" id="2hY-cr-7eS"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
+                    <connections>
+                        <outlet property="txtCat" destination="iIE-RU-nXo" id="jXd-bG-tiG"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="t2B-Ay-Wnx" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -228,7 +235,7 @@
         <!--Categories-->
         <scene sceneID="b0W-Xg-1St">
             <objects>
-                <viewController id="j9w-PH-6FN" customClass="CategoryViewController" customModule="TasksGalore" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="j9w-PH-6FN" customClass="CategoryViewController" customModule="SQLiteDB_iOS" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="nAM-Qg-eJR"/>
                         <viewControllerLayoutGuide type="bottom" id="00o-6h-0y7"/>

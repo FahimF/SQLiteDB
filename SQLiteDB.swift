@@ -7,6 +7,7 @@
 //
 
 import Foundation
+//import Crashlytics
 #if os(iOS)
 import UIKit
 #else
@@ -14,6 +15,9 @@ import AppKit
 #endif
 
 let SQLITE_DATE = SQLITE_NULL + 1
+
+private let SQLITE_STATIC = sqlite3_destructor_type(COpaquePointer(bitPattern:0))
+private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern:-1))
 
 // MARK:- SQLColumn Class - Column Definition
 @objc class SQLColumn {
@@ -300,9 +304,9 @@ let SQLITE_DATE = SQLITE_NULL + 1
 #if os(iOS)
 			let alert = UIAlertView(title: "SQLiteDB", message:msg, delegate: nil, cancelButtonTitle: "OK")
 			alert.show()
-			#else
+#else
 			let alert = NSAlert()
-			alert.addButtonWithTitle("Ok")
+			alert.addButtonWithTitle("OK")
 			alert.messageText = "SQLiteDB"
 			alert.informativeText = msg
 			alert.alertStyle = NSAlertStyle.WarningAlertStyle
@@ -322,7 +326,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(error)"
 				println(msg)
-				self.alert(msg)
+//				CLSLogv(msg, getVaList([]))
 			}
 			return nil
 		}
@@ -334,40 +338,27 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			if cntParams != cnt {
 				let msg = "SQLiteDB - failed to bind parameters, counts did not match. SQL: \(sql), Parameters: \(params)"
 				println(msg)
-				self.alert(msg)
+//				CLSLogv(msg, getVaList([]))
 				return nil
 			}
 			var flag:CInt = 0
-			// Text values passed to a C-API do not work correctly if they are not marked as transient. All the following gymnastics is to get the correct value to pass
-			let intTran = UnsafeMutablePointer<Int>(bitPattern: -1)
-			let tranPointer = COpaquePointer(intTran)
-			let transient = CFunctionPointer<((UnsafeMutablePointer<()>) -> Void)>(tranPointer)
+			// Text & BLOB values passed to a C-API do not work correctly if they are not marked as transient.
 			for ndx in 1...cnt {
 //				println("Binding: \(params![ndx-1]) at Index: \(ndx)")
 				// Check for data types
-				if params![ndx-1] is String {
-					let txt = params![ndx-1] as String
-					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, transient)
-				} else if params![ndx-1] is NSData {
-					let data = params![ndx-1] as NSData
-					flag = sqlite3_bind_blob(stmt, CInt(ndx), data.bytes, -1, nil)
-				} else if params![ndx-1] is NSDate {
-					let date = params![ndx-1] as NSDate
+				if let txt = params![ndx-1] as? String {
+					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, SQLITE_TRANSIENT)
+				} else if let data = params![ndx-1] as? NSData {
+					flag = sqlite3_bind_blob(stmt, CInt(ndx), data.bytes, CInt(data.length), SQLITE_TRANSIENT)
+				} else if let date = params![ndx-1] as? NSDate {
 					let txt = fmt.stringFromDate(date)
-					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, transient)
-				} else if params![ndx-1] is Int {
-					// Is this an integer or float
-					let vfl = params![ndx-1] as Double
-					let vint = Double(Int(vfl))
-					if vfl == vint {
-						// Integer
-						let val = params![ndx-1] as Int
-						flag = sqlite3_bind_int(stmt, CInt(ndx), CInt(val))
-					} else {
-						// Float
-						let val = params![ndx-1] as Double
-						flag = sqlite3_bind_double(stmt, CInt(ndx), CDouble(val))
-					}
+					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, SQLITE_TRANSIENT)
+				} else if let val = params![ndx-1] as? Double {
+					flag = sqlite3_bind_double(stmt, CInt(ndx), CDouble(val))
+				} else if let val = params![ndx-1] as? Int {
+					flag = sqlite3_bind_int(stmt, CInt(ndx), CInt(val))
+				} else {
+					flag = sqlite3_bind_null(stmt, CInt(ndx))
 				}
 				// Check for errors
 				if flag != SQLITE_OK {
@@ -375,7 +366,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 					if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 						let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
 						println(msg)
-						self.alert(msg)
+//						CLSLogv(msg, getVaList([]))
 					}
 					return nil
 				}
@@ -393,7 +384,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			if let err = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(err)"
 				println(msg)
-				self.alert(msg)
+//				CLSLogv(msg, getVaList([]))
 			}
 			return 0
 		}
@@ -434,7 +425,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 					let name = sqlite3_column_name(stmt, index)
 					columnNames.append(String.fromCString(name)!)
 					// Get column type
-					columnTypes.append(self.getColumnType(index, stmt: stmt))
+					columnTypes.append(self.getColumnType(index, stmt:stmt))
 				}
 				fetchColumnInfo = false
 			}
@@ -443,7 +434,7 @@ let SQLITE_DATE = SQLITE_NULL + 1
 			for index in 0..<columnCount {
 				let key = columnNames[Int(index)]
 				let type = columnTypes[Int(index)]
-				if let val:AnyObject = self.getColumnValue(index, type: type, stmt: stmt) {
+				if let val:AnyObject = self.getColumnValue(index, type:type, stmt:stmt) {
 //						println("Column type:\(type) with value:\(val)")
 					let col = SQLColumn(value: val, type: type)
 					row[key] = col

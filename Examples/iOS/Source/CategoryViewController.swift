@@ -15,11 +15,14 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		let arr = db.query("SELECT * FROM categories ORDER BY name ASC")
-		data = arr
-		table.reloadData()
 	}
 
+	override func viewWillAppear(animated: Bool) {
+		super.viewWillAppear(animated)
+		data = db.query("SELECT * FROM categories ORDER BY name ASC")
+		table.reloadData()
+	}
+	
 	override func didReceiveMemoryWarning() {
 		super.didReceiveMemoryWarning()
 	}
@@ -34,7 +37,7 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 		let cell:UITableViewCell = tv.dequeueReusableCellWithIdentifier("CategoryCell") as UITableViewCell
 		let row = data[indexPath.row]
 		if let name = row["name"] {
-			cell.textLabel.text = name.asString()
+			cell.textLabel?.text = name.asString()
 		}
 		return cell
 	}

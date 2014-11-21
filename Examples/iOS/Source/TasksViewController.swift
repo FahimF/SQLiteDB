@@ -19,8 +19,7 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
-		let arr = db.query("SELECT * FROM tasks ORDER BY task ASC")
-		data = arr
+		data = db.query("SELECT * FROM tasks ORDER BY task ASC")
 		table.reloadData()
 	}
 	
@@ -38,7 +37,7 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 		let cell:UITableViewCell = tv.dequeueReusableCellWithIdentifier("TaskCell") as UITableViewCell
 		let row = data[indexPath.row]
 		if let task = row["task"] {
-			cell.textLabel.text = task.asString()
+			cell.textLabel?.text = task.asString()
 		}
 		return cell
 	}
