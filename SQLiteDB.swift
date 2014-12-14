@@ -7,7 +7,6 @@
 //
 
 import Foundation
-//import Crashlytics
 #if os(iOS)
 import UIKit
 #else
@@ -170,6 +169,10 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				return nil
 		}
 	}
+	
+	func description()->String {
+		return "Type: \(type), Value: \(value)"
+	}
 }
 
 // MARK:- SQLRow Class - Row Definition
@@ -185,15 +188,20 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			data[key] = newVal
 		}
 	}
+	
+	func description()->String {
+		return data.description
+	}
 }
 
 // MARK:- SQLiteDB Class - Does all the work
 @objc class SQLiteDB {
 	let DB_NAME = "data.db"
 	let QUEUE_LABLE = "SQLiteDB"
-	var db:COpaquePointer = nil
-	var queue:dispatch_queue_t
-	var fmt = NSDateFormatter()
+	private var db:COpaquePointer = nil
+	private var queue:dispatch_queue_t
+	private var fmt = NSDateFormatter()
+	private var GROUP = ""
 	
 	struct Static {
 		static var instance:SQLiteDB? = nil
@@ -202,23 +210,42 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 	
 	class func sharedInstance() -> SQLiteDB! {
 		dispatch_once(&Static.token) {
-//			println("SQLiteDB - Dispatch once")
-			Static.instance = self()
+			Static.instance = self(gid:"")
+		}
+		return Static.instance!
+	}
+	
+	class func sharedInstance(gid:String) -> SQLiteDB! {
+		dispatch_once(&Static.token) {
+			Static.instance = self(gid:gid)
 		}
 		return Static.instance!
 	}
  
-	required init() {
-//		println("SQLiteDB - Init method")
+	required init(gid:String) {
 		assert(Static.instance == nil, "Singleton already initialized!")
+		GROUP = gid
 		// Set queue
 		queue = dispatch_queue_create(QUEUE_LABLE, nil)
-		// Get path to DB in Documents directory
-		let docDir:AnyObject = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
-		let dbName:String = String.fromCString(DB_NAME)!
-		let path = docDir.stringByAppendingPathComponent(dbName)
-		// Check if copy of DB is there in Documents directory
+		// Set up for file operations
 		let fm = NSFileManager.defaultManager()
+		let dbName:String = String.fromCString(DB_NAME)!
+		var docDir = ""
+		// Is this for an app group?
+		if GROUP.isEmpty {
+			// Get path to DB in Documents directory
+			docDir = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+		} else {
+			// Get path to shared group folder
+			if let url = fm.containerURLForSecurityApplicationGroupIdentifier(GROUP) {
+				docDir = url.path!
+			} else {
+				assert(false, "Error getting container URL for group: \(GROUP)")
+			}
+		}
+		let path = docDir.stringByAppendingPathComponent(dbName)
+		println("Database path: \(path)")
+		// Check if copy of DB is there in Documents directory
 		if !(fm.fileExistsAtPath(path)) {
 			// The database does not exist, so copy to Documents directory
 			if let from = NSBundle.mainBundle().resourcePath?.stringByAppendingPathComponent(dbName) {
@@ -326,7 +353,6 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(error)"
 				println(msg)
-//				CLSLogv(msg, getVaList([]))
 			}
 			return nil
 		}
@@ -338,7 +364,6 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			if cntParams != cnt {
 				let msg = "SQLiteDB - failed to bind parameters, counts did not match. SQL: \(sql), Parameters: \(params)"
 				println(msg)
-//				CLSLogv(msg, getVaList([]))
 				return nil
 			}
 			var flag:CInt = 0
@@ -366,7 +391,6 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 					if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 						let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
 						println(msg)
-//						CLSLogv(msg, getVaList([]))
 					}
 					return nil
 				}
@@ -384,7 +408,6 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			if let err = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(err)"
 				println(msg)
-//				CLSLogv(msg, getVaList([]))
 			}
 			return 0
 		}

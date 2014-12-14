@@ -41,5 +41,20 @@ extension String {
 		substr = self[range]
 		return substr
 	}
+	
+	func urlEncoded()->String {
+		let res:NSString = CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, self as NSString, nil,
+			"!*'();:@&=+$,/?%#[]", CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding))
+		return res
+	}
+	
+	func urlDecoded()->String {
+		let res:NSString = CFURLCreateStringByReplacingPercentEscapesUsingEncoding(kCFAllocatorDefault, self as NSString, "", CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding))
+		return res
+	}
+	
+	func range()->Range<String.Index> {
+		return Range<String.Index>(start:startIndex, end:endIndex)
+	}
 }
 
