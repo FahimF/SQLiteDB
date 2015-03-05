@@ -52,7 +52,7 @@ In the above, `db` is a reference to the shared SQLite database instance and `SQ
 
 * You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 ```swift
-	let result = db.execute("DELETE * FROM customers WHERE last_name='Smith'")
+	let result = db.execute("DELETE FROM customers WHERE last_name='Smith'")
 	// If the result is 0 then the operation failed
 ```
 
