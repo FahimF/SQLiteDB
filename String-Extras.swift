@@ -45,12 +45,12 @@ extension String {
 	func urlEncoded()->String {
 		let res:NSString = CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, self as NSString, nil,
 			"!*'();:@&=+$,/?%#[]", CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding))
-		return res
+		return res as String
 	}
 	
 	func urlDecoded()->String {
 		let res:NSString = CFURLCreateStringByReplacingPercentEscapesUsingEncoding(kCFAllocatorDefault, self as NSString, "", CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding))
-		return res
+		return res as String
 	}
 	
 	func range()->Range<String.Index> {

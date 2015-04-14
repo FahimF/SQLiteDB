@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		DD76985919F62DA200F7C8A5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD76985219F62DA100F7C8A5 /* Main.storyboard */; };
 		DD76985A19F62DA200F7C8A5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD76985419F62DA100F7C8A5 /* Images.xcassets */; };
-		DD76985B19F62DA200F7C8A5 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DD76985519F62DA100F7C8A5 /* Info.plist */; };
 		DD76985C19F62DA200F7C8A5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD76985719F62DA200F7C8A5 /* AppDelegate.swift */; };
 		DD76985D19F62DA200F7C8A5 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD76985819F62DA200F7C8A5 /* ViewController.swift */; };
 		DD76985F19F62E4000F7C8A5 /* data.db in Resources */ = {isa = PBXBuildFile; fileRef = DD76985E19F62E4000F7C8A5 /* data.db */; };
@@ -127,7 +126,7 @@
 		DD76982719F62D3000F7C8A5 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0610;
+				LastUpgradeCheck = 0630;
 				ORGANIZATIONNAME = "RookSoft Ltd.";
 				TargetAttributes = {
 					DD76982E19F62D3000F7C8A5 = {
@@ -161,7 +160,6 @@
 				DD76985919F62DA200F7C8A5 /* Main.storyboard in Resources */,
 				DD76985F19F62E4000F7C8A5 /* data.db in Resources */,
 				DD76985A19F62DA200F7C8A5 /* Images.xcassets in Resources */,
-				DD76985B19F62DA200F7C8A5 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

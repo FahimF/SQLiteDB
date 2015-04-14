@@ -36,11 +36,11 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				return "\(value!)"
 				
 			case SQLITE_TEXT:
-				return value as String
+				return value as! String
 				
 			case SQLITE_BLOB:
-				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
-					return str
+				if let str = NSString(data:value as! NSData, encoding:NSUTF8StringEncoding) {
+					return str as String
 				} else {
 					return ""
 				}
@@ -51,7 +51,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			case SQLITE_DATE:
 				let fmt = NSDateFormatter()
 				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-				return fmt.stringFromDate(value as NSDate)
+				return fmt.stringFromDate(value as! NSDate)
 				
 			default:
 				return ""
@@ -61,14 +61,14 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 	func asInt()->Int {
 		switch (type) {
 			case SQLITE_INTEGER, SQLITE_FLOAT:
-				return value as Int
+				return value as! Int
 				
 			case SQLITE_TEXT:
-				let str = value as NSString
+				let str = value as! NSString
 				return str.integerValue
 				
 			case SQLITE_BLOB:
-				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
+				if let str = NSString(data:value as! NSData, encoding:NSUTF8StringEncoding) {
 					return str.integerValue
 				} else {
 					return 0
@@ -78,7 +78,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				return 0
 				
 			case SQLITE_DATE:
-				return Int((value as NSDate).timeIntervalSince1970)
+				return Int((value as! NSDate).timeIntervalSince1970)
 				
 			default:
 				return 0
@@ -88,14 +88,14 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 	func asDouble()->Double {
 		switch (type) {
 			case SQLITE_INTEGER, SQLITE_FLOAT:
-				return value as Double
+				return value as! Double
 			
 			case SQLITE_TEXT:
-				let str = value as NSString
+				let str = value as! NSString
 				return str.doubleValue
 			
 			case SQLITE_BLOB:
-				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
+				if let str = NSString(data:value as! NSData, encoding:NSUTF8StringEncoding) {
 					return str.doubleValue
 				} else {
 					return 0.0
@@ -105,7 +105,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				return 0.0
 			
 			case SQLITE_DATE:
-				return (value as NSDate).timeIntervalSince1970
+				return (value as! NSDate).timeIntervalSince1970
 			
 			default:
 				return 0.0
@@ -119,7 +119,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				return str.dataUsingEncoding(NSUTF8StringEncoding)
 			
 			case SQLITE_TEXT:
-				let str = value as NSString
+				let str = value as! NSString
 				return str.dataUsingEncoding(NSUTF8StringEncoding)
 			
 			case SQLITE_BLOB:
@@ -131,7 +131,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			case SQLITE_DATE:
 				let fmt = NSDateFormatter()
 				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-				let str = fmt.stringFromDate(value as NSDate)
+				let str = fmt.stringFromDate(value as! NSDate)
 				return str.dataUsingEncoding(NSUTF8StringEncoding)
 			
 			default:
@@ -142,19 +142,19 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 	func asDate()->NSDate? {
 		switch (type) {
 			case SQLITE_INTEGER, SQLITE_FLOAT:
-				let tm = value as Double
+				let tm = value as! Double
 				return NSDate(timeIntervalSince1970:tm)
 			
 			case SQLITE_TEXT:
 				let fmt = NSDateFormatter()
 				fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-				return fmt.dateFromString(value as String)
+				return fmt.dateFromString(value as! String)
 			
 			case SQLITE_BLOB:
-				if let str = NSString(data:value as NSData, encoding:NSUTF8StringEncoding) {
+				if let str = NSString(data:value as! NSData, encoding:NSUTF8StringEncoding) {
 					let fmt = NSDateFormatter()
 					fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-					return fmt.dateFromString(str)
+					return fmt.dateFromString(str as String)
 				} else {
 					return nil
 				}
@@ -234,7 +234,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 		// Is this for an app group?
 		if GROUP.isEmpty {
 			// Get path to DB in Documents directory
-			docDir = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+			docDir = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as! String
 		} else {
 			// Get path to shared group folder
 			if let url = fm.containerURLForSecurityApplicationGroupIdentifier(GROUP) {
