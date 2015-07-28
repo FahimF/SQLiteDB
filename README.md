@@ -1,6 +1,10 @@
 SQLiteDB 
 ========
 
+**Note:** I am no longer updating/developing this framework since I personally do not use it any longer. I have switched over to using [Realm](https://realm.io/) for most of my own development work.
+
+If you need an SQLite library for your development, you might consider using [SQLite.swift](https://github.com/stephencelis/SQLite.swift) instead of SQLiteDB. (There are other Swift SQLite libraries, but most of them don't appear to be updated for Swift 2.0 at the moment.)
+
 This is a simple and lightweight SQLite wrapper for Swift. It allows all basic SQLite functionality including being able to bind values to parameters in an SQL statement. The framework does require an initial SQLite databae to be included in your project - it does not create the database for you via code.
 
 **Important:** If you are new to Swift or have not bothered to read up on the Swift documentation, please do not contact me about Swift functionality. I just don't have the time to answer your queries about Swift. Of course, if you're willing to pay for my time though, feel free to contact me :)

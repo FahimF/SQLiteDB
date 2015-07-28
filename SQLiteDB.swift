@@ -227,6 +227,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 		GROUP = gid
 		// Set queue
 		queue = dispatch_queue_create(QUEUE_LABLE, nil)
+		fmt.timeZone = NSTimeZone(forSecondsFromGMT:0)
 		// Set up for file operations
 		let fm = NSFileManager.defaultManager()
 		let dbName:String = String.fromCString(DB_NAME)!
