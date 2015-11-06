@@ -21,7 +21,7 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, sqlite3_destructor_type.self)
 // MARK:- SQLiteDB Class - Does all the work
 class SQLiteDB {
 	let DB_NAME = "data.db"
-	let QUEUE_LABLE = "SQLiteDB"
+	let QUEUE_LABEL = "SQLiteDB"
 	private var db:COpaquePointer = nil
 	private var queue:dispatch_queue_t
 	private var fmt = NSDateFormatter()
@@ -50,7 +50,7 @@ class SQLiteDB {
 		assert(Static.instance == nil, "Singleton already initialized!")
 		GROUP = gid
 		// Set queue
-		queue = dispatch_queue_create(QUEUE_LABLE, nil)
+		queue = dispatch_queue_create(QUEUE_LABEL, nil)
 		fmt.timeZone = NSTimeZone(forSecondsFromGMT:0)
 		// Set up for file operations
 		let fm = NSFileManager.defaultManager()

@@ -1,9 +1,9 @@
 SQLiteDB 
 ========
 
-This is a simple and lightweight SQLite wrapper for Swift. It allows all basic SQLite functionality including being able to bind values to parameters in an SQL statement. The framework does require an initial SQLite databae to be included in your project - it does not create the database for you via code.
+This is a simple and lightweight SQLite wrapper for Swift. It allows all basic SQLite functionality including being able to bind values to parameters in an SQL statement. The framework does require an initial SQLite database to be included in your project - it does not create the database for you via code.
 
-**Important:** If you are new to Swift or have not bothered to read up on the Swift documentation, please do not contact me about Swift functionality. I just don't have the time to answer your queries about Swift. Of course, if you're willing to pay for my time though, feel free to contact me :)
+**Important:** If you are new to Swift or have not bothered to read up on the Swift documentation, please do not contact me about Swift functionality. I just don't have the time to answer your queries about Swift. On the other hand, if you're not looking for free advice but are willing to pay for my time, do feel free to contact me :)
 
 Adding to Your Project
 ---
@@ -28,17 +28,17 @@ Usage
 	let db = SQLiteDB.sharedInstance()
 ```
 
-* You can make SQL queries using the `query` method (the results are returned as an array of `SQLRow` objects):
+* You can make SQL queries using the `query` method (the results are returned as an array of dictionaries where the key is a `String` and the value is of type `AnyObject`):
 ```swift
 	let data = db.query("SELECT * FROM customers WHERE name='John'")
 	let row = data[0]
 	if let name = row["name"] {
-		textLabel.text = name.asString()
+		textLabel.text = name as! String
 	}
 ```
-In the above, `db` is a reference to the shared SQLite database instance and `SQLRow` is a class defined to model a data row in SQLiteDB. You can access a column from your query results by subscripting the `SQLRow` instance based on the column name. That returns an `SQLColumn` instance from which you can retrieve the data as a native data type by using the `asString`, `asInt`, `asDouble`, `asData`, and `asDate` methods provided by `SQLColumn`.
+In the above, `db` is a reference to the shared SQLite database instance. You can access a column from your query results by subscripting a row of the returned results (the rows are dictionaries) based on the column name. That returns an `AnyObject` value which you can cast to the relevant data type.
 
-* If you'd prefer to bind values to your query instead of creating the full SQL string, then you can execute the above SQL also like this:
+* If you'd prefer to bind values to your query instead of creating the full SQL statement, then you can execute the above SQL also like this:
 ```swift
 	let name = "John"
 	let data = db.query("SELECT * FROM customers WHERE name=?", parameters:[name])
@@ -53,10 +53,12 @@ In the above, `db` is a reference to the shared SQLite database instance and `SQ
 * You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 ```swift
 	let result = db.execute("DELETE FROM customers WHERE last_name='Smith'")
-	// If the result is 0 then the operation failed
+	// If the result is 0 then the operation failed, for inserts the result gives the newly inserted record ID
 ```
 
 * The `esc` method which was previously available in SQLiteDB is no longer there. So, for instance, if you need to escape strings with embedded quotes, you should use the SQLite parameter binding functionality as shown above.
+
+* If you would prefer to model your database tables as classes, SQLiteDB also provides an `SQLTable` class which does most of the heavy lifting for you. If you create a sub-class of `SQLTable`, define properties where the names match the column names in your SQLite table, then you can use the sub-class to save to/update the database without having to write all the necessary code yourself. Refer to the sample iOS project for details about how to implement this.
 
 Questions?
 ---
