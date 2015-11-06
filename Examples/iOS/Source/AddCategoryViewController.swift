@@ -22,14 +22,11 @@ class AddCategoryViewController: UITableViewController {
 			alert.show()
 		}
 		// Save task
-		let db = SQLiteDB.sharedInstance()
-		let sql = "INSERT INTO categories(name) VALUES (?)"
-		let params = [txtCat.text!]
-		let rc = db.execute(sql, parameters:params)
-		if rc != 0 {
+		let cat = Category()
+		cat.name = txtCat.text!
+		if cat.save().success {
 			let alert = UIAlertView(title:"SQLiteDB", message:"Category successfully saved!", delegate:nil, cancelButtonTitle: "OK")
 			alert.show()
 		}
 	}
-	
 }

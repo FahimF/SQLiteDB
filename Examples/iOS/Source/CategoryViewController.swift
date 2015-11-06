@@ -10,7 +10,7 @@ import UIKit
 
 class CategoryViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 	@IBOutlet var table:UITableView!
-	var data = [SQLRow]()
+	var data = [Category]()
 	let db = SQLiteDB.sharedInstance()
 	
 	override func viewDidLoad() {
@@ -19,7 +19,7 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
-		data = db.query("SELECT * FROM categories ORDER BY name ASC")
+		data = Category().allRows("name ASC")
 		table.reloadData()
 	}
 	
@@ -35,10 +35,8 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 	
 	func tableView(tv:UITableView, cellForRowAtIndexPath indexPath:NSIndexPath) -> UITableViewCell {
 		let cell = tv.dequeueReusableCellWithIdentifier("CategoryCell")!
-		let row = data[indexPath.row]
-		if let name = row["name"] {
-			cell.textLabel?.text = name.asString()
-		}
+		let cat = data[indexPath.row]
+		cell.textLabel?.text = cat.name
 		return cell
 	}
 }

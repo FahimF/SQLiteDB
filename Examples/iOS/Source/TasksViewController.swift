@@ -10,8 +10,7 @@ import UIKit
 
 class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 	@IBOutlet var table:UITableView!
-	var data = [SQLRow]()
-	let db = SQLiteDB.sharedInstance()
+	var data = [Task]()
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -19,7 +18,8 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
-		data = db.query("SELECT * FROM tasks ORDER BY task ASC")
+//		data = Task().allRows("task ASC")
+		data = Task().allRows("id ASC")
 		table.reloadData()
 	}
 	
@@ -35,10 +35,8 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 	
 	func tableView(tv:UITableView, cellForRowAtIndexPath indexPath:NSIndexPath) -> UITableViewCell {
 		let cell = tv.dequeueReusableCellWithIdentifier("TaskCell")!
-		let row = data[indexPath.row]
-		if let task = row["task"] {
-			cell.textLabel?.text = task.asString()
-		}
+		let task = data[indexPath.row]
+		cell.textLabel?.text = task.task
 		return cell
 	}
 }

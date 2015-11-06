@@ -22,10 +22,9 @@ class AddTaskViewController: UITableViewController {
 			alert.show()
 		}
 		// Save task
-		let db = SQLiteDB.sharedInstance()
-		let sql = "INSERT INTO tasks(task, categoryID) VALUES ('\(txtTask.text)', 1)"
-		let rc = db.execute(sql)
-		if rc != 0 {
+		let task = Task()
+		task.task = txtTask.text!
+		if task.save().success {
 			let alert = UIAlertView(title:"SQLiteDB", message:"Task successfully saved!", delegate:nil, cancelButtonTitle: "OK")
 			alert.show()
 		}
