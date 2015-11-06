@@ -8,9 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		DD04B4791BEC367E008E1261 /* SQLTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4781BEC367E008E1261 /* SQLTable.swift */; };
-		DD04B47C1BEC50A4008E1261 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B47B1BEC50A4008E1261 /* Category.swift */; };
-		DD04B47E1BEC50B0008E1261 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B47D1BEC50B0008E1261 /* Task.swift */; };
 		DD04B4811BEC511B008E1261 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD04B47F1BEC511B008E1261 /* Launch Screen.storyboard */; };
+		DD04B4851BEC6D6D008E1261 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4831BEC6D6D008E1261 /* Category.swift */; };
+		DD04B4861BEC6D6D008E1261 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4841BEC6D6D008E1261 /* Task.swift */; };
 		DD18184219D56B5B0053E68E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD18183519D56B5B0053E68E /* Main.storyboard */; };
 		DD18184319D56B5B0053E68E /* data.db in Resources */ = {isa = PBXBuildFile; fileRef = DD18183719D56B5B0053E68E /* data.db */; };
 		DD18184419D56B5B0053E68E /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD18183819D56B5B0053E68E /* Images.xcassets */; };
@@ -26,9 +26,9 @@
 
 /* Begin PBXFileReference section */
 		DD04B4781BEC367E008E1261 /* SQLTable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLTable.swift; path = ../../SQLTable.swift; sourceTree = "<group>"; };
-		DD04B47B1BEC50A4008E1261 /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
-		DD04B47D1BEC50B0008E1261 /* Task.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 		DD04B4801BEC511B008E1261 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = "Base.lproj/Launch Screen.storyboard"; sourceTree = "<group>"; };
+		DD04B4831BEC6D6D008E1261 /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		DD04B4841BEC6D6D008E1261 /* Task.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 		DD18183619D56B5B0053E68E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		DD18183719D56B5B0053E68E /* data.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = data.db; sourceTree = "<group>"; };
 		DD18183819D56B5B0053E68E /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -57,11 +57,11 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		DD04B47A1BEC508D008E1261 /* Shared */ = {
+		DD04B4821BEC6D6D008E1261 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				DD04B47B1BEC50A4008E1261 /* Category.swift */,
-				DD04B47D1BEC50B0008E1261 /* Task.swift */,
+				DD04B4831BEC6D6D008E1261 /* Category.swift */,
+				DD04B4841BEC6D6D008E1261 /* Task.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -89,7 +89,7 @@
 		DD18183B19D56B5B0053E68E /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				DD04B47A1BEC508D008E1261 /* Shared */,
+				DD04B4821BEC6D6D008E1261 /* Shared */,
 				DD18183C19D56B5B0053E68E /* AddCategoryViewController.swift */,
 				DD18183D19D56B5B0053E68E /* AddTaskViewController.swift */,
 				DD18183E19D56B5B0053E68E /* AppDelegate.swift */,
@@ -219,11 +219,11 @@
 			files = (
 				DD18184919D56B5B0053E68E /* AppDelegate.swift in Sources */,
 				DD04B4791BEC367E008E1261 /* SQLTable.swift in Sources */,
-				DD04B47E1BEC50B0008E1261 /* Task.swift in Sources */,
+				DD04B4861BEC6D6D008E1261 /* Task.swift in Sources */,
 				DD18184B19D56B5B0053E68E /* TasksViewController.swift in Sources */,
 				DD18184719D56B5B0053E68E /* AddCategoryViewController.swift in Sources */,
 				DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */,
-				DD04B47C1BEC50A4008E1261 /* Category.swift in Sources */,
+				DD04B4851BEC6D6D008E1261 /* Category.swift in Sources */,
 				DD18184A19D56B5B0053E68E /* CategoryViewController.swift in Sources */,
 				DD18184F19D56BAF0053E68E /* String-Extras.swift in Sources */,
 				DD18184819D56B5B0053E68E /* AddTaskViewController.swift in Sources */,
