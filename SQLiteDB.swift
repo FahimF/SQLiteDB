@@ -15,11 +15,11 @@ import AppKit
 
 let SQLITE_DATE = SQLITE_NULL + 1
 
-private let SQLITE_STATIC = sqlite3_destructor_type(COpaquePointer(bitPattern:0))
-private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern:-1))
+private let SQLITE_STATIC = unsafeBitCast(0, sqlite3_destructor_type.self)
+private let SQLITE_TRANSIENT = unsafeBitCast(-1, sqlite3_destructor_type.self)
 
 // MARK:- SQLColumn Class - Column Definition
-@objc class SQLColumn {
+class SQLColumn {
 	var value:AnyObject? = nil
 	var type:CInt = -1
 	
@@ -176,7 +176,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 }
 
 // MARK:- SQLRow Class - Row Definition
-@objc class SQLRow {
+class SQLRow {
 	var data = Dictionary<String, SQLColumn>()
 	
 	subscript(key: String) -> SQLColumn? {
@@ -195,7 +195,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 }
 
 // MARK:- SQLiteDB Class - Does all the work
-@objc class SQLiteDB {
+class SQLiteDB {
 	let DB_NAME = "data.db"
 	let QUEUE_LABLE = "SQLiteDB"
 	private var db:COpaquePointer = nil
@@ -210,14 +210,14 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 	
 	class func sharedInstance() -> SQLiteDB! {
 		dispatch_once(&Static.token) {
-			Static.instance = self(gid:"")
+			Static.instance = self.init(gid:"")
 		}
 		return Static.instance!
 	}
 	
 	class func sharedInstance(gid:String) -> SQLiteDB! {
 		dispatch_once(&Static.token) {
-			Static.instance = self(gid:gid)
+			Static.instance = self.init(gid:gid)
 		}
 		return Static.instance!
 	}
@@ -235,7 +235,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 		// Is this for an app group?
 		if GROUP.isEmpty {
 			// Get path to DB in Documents directory
-			docDir = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as! String
+			docDir = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] 
 		} else {
 			// Get path to shared group folder
 			if let url = fm.containerURLForSecurityApplicationGroupIdentifier(GROUP) {
@@ -244,18 +244,19 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				assert(false, "Error getting container URL for group: \(GROUP)")
 			}
 		}
-		let path = docDir.stringByAppendingPathComponent(dbName)
-		println("Database path: \(path)")
+		let path = (docDir as NSString).stringByAppendingPathComponent(dbName)
+		print("Database path: \(path)")
 		// Check if copy of DB is there in Documents directory
 		if !(fm.fileExistsAtPath(path)) {
 			// The database does not exist, so copy to Documents directory
-			if let from = NSBundle.mainBundle().resourcePath?.stringByAppendingPathComponent(dbName) {
-				var error:NSError?
-				if !fm.copyItemAtPath(from, toPath: path, error: &error) {
-					println("SQLiteDB - failed to copy writable version of DB!")
-					println("Error - \(error!.localizedDescription)")
-					return
-				}
+			guard let rp = NSBundle.mainBundle().resourcePath else { return }
+			let from = (rp as NSString).stringByAppendingPathComponent(dbName)
+			do {
+				try fm.copyItemAtPath(from, toPath:path)
+			} catch let error as NSError {
+				print("SQLiteDB - failed to copy writable version of DB!")
+				print("Error - \(error.localizedDescription)")
+				return
 			}
 		}
 		// Open the DB
@@ -263,7 +264,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 		let error = sqlite3_open(cpath!, &db)
 		if error != SQLITE_OK {
 			// Open failed, close DB and fail
-			println("SQLiteDB - failed to open DB!")
+			print("SQLiteDB - failed to open DB!")
 			sqlite3_close(db)
 		}
 		fmt.dateFormat = "YYYY-MM-dd HH:mm:ss"
@@ -279,7 +280,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			let ud = NSUserDefaults.standardUserDefaults()
 			var launchCount = ud.integerForKey("LaunchCount")
 			launchCount--
-			println("SQLiteDB - Launch count \(launchCount)")
+			print("SQLiteDB - Launch count \(launchCount)")
 			var clean = false
 			if launchCount < 0 {
 				clean = true
@@ -293,10 +294,10 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				return
 			}
 			// Clean DB
-			println("SQLiteDB - Optimize DB")
+			print("SQLiteDB - Optimize DB")
 			let sql = "VACUUM; ANALYZE"
 			if execute(sql) != SQLITE_OK {
-				println("SQLiteDB - Error cleaning DB")
+				print("SQLiteDB - Error cleaning DB")
 			}
 			sqlite3_close(db)
 		}
@@ -346,14 +347,14 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 	// Private method which prepares the SQL
 	private func prepare(sql:String, params:[AnyObject]?)->COpaquePointer {
 		var stmt:COpaquePointer = nil
-		var cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
+		let cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
 		// Prepare
 		let result = sqlite3_prepare_v2(self.db, cSql!, -1, &stmt, nil)
 		if result != SQLITE_OK {
 			sqlite3_finalize(stmt)
 			if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(error)"
-				println(msg)
+				print(msg)
 			}
 			return nil
 		}
@@ -364,7 +365,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			let cnt = CInt(params!.count)
 			if cntParams != cnt {
 				let msg = "SQLiteDB - failed to bind parameters, counts did not match. SQL: \(sql), Parameters: \(params)"
-				println(msg)
+				print(msg)
 				return nil
 			}
 			var flag:CInt = 0
@@ -391,7 +392,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 					sqlite3_finalize(stmt)
 					if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 						let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
-						println(msg)
+						print(msg)
 					}
 					return nil
 				}
@@ -408,7 +409,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			sqlite3_finalize(stmt)
 			if let err = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(err)"
-				println(msg)
+				print(msg)
 			}
 			return 0
 		}
@@ -454,7 +455,7 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 				fetchColumnInfo = false
 			}
 			// Get row data for each column
-			var row = SQLRow()
+			let row = SQLRow()
 			for index in 0..<columnCount {
 				let key = columnNames[Int(index)]
 				let type = columnTypes[Int(index)]
@@ -496,22 +497,22 @@ private let SQLITE_TRANSIENT = sqlite3_destructor_type(COpaquePointer(bitPattern
 			// Remove spaces
 			// Is the data type in any of the pre-set values?
 //			println("SQLiteDB - Cleaned up column type: \(tmp)")
-			if contains(intTypes, tmp) {
+			if intTypes.contains(tmp) {
 				return SQLITE_INTEGER
 			}
-			if contains(realTypes, tmp) {
+			if realTypes.contains(tmp) {
 				return SQLITE_FLOAT
 			}
-			if contains(charTypes, tmp) {
+			if charTypes.contains(tmp) {
 				return SQLITE_TEXT
 			}
-			if contains(blobTypes, tmp) {
+			if blobTypes.contains(tmp) {
 				return SQLITE_BLOB
 			}
-			if contains(nullTypes, tmp) {
+			if nullTypes.contains(tmp) {
 				return SQLITE_NULL
 			}
-			if contains(dateTypes, tmp) {
+			if dateTypes.contains(tmp) {
 				return SQLITE_DATE
 			}
 			return SQLITE_TEXT

@@ -17,7 +17,7 @@ class AddTaskViewController: UITableViewController {
 			txtTask.resignFirstResponder()
 		}
 		// Validations
-		if txtTask.text.isEmpty {
+		if txtTask.text!.isEmpty {
 			let alert = UIAlertView(title:"SQLiteDB", message:"Please add a task description first!", delegate:nil, cancelButtonTitle: "OK")
 			alert.show()
 		}
