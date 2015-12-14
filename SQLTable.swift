@@ -9,21 +9,25 @@
 import UIKit
 
 class SQLTable:NSObject {
-	var table = ""
 	private var data:[String:AnyObject]!
 	
-	required init(tableName:String) {
-		super.init()
-		table = tableName
+	private static var table:String {
+		let str = self.classForCoder()
+		return "\(str)s".lowercaseString
 	}
 	
-	func primaryKey() -> String {
+	required override init() {
+		super.init()
+	}
+	
+	class func primaryKey() -> String {
 		return "id"
 	}
 	
-	func allRows<T:SQLTable>(order:String="") -> [T] {
-		var res = [T]()
-		self.data = values()
+	class func allRows(order:String="") -> [SQLTable] {
+		var res = [SQLTable]()
+		let tmp = self.init()
+		let data = tmp.values()
 		let db = SQLiteDB.sharedInstance()
 		var sql = "SELECT * FROM \(table)"
 		if !order.isEmpty {
@@ -31,7 +35,7 @@ class SQLTable:NSObject {
 		}
 		let arr = db.query(sql)
 		for row in arr {
-			let t = T(tableName:table)
+			let t = self.init()
 			for (key, _) in data {
 				let val = row[key]
 				t.setValue(val, forKey:key)
@@ -40,15 +44,56 @@ class SQLTable:NSObject {
 		}
 		return res
 	}
+
+	class func rowByID(rid:Int) -> SQLTable? {
+		let row = self.init()
+		let data = row.values()
+		let db = SQLiteDB.sharedInstance()
+		let sql = "SELECT * FROM \(table) WHERE \(primaryKey())=\(rid)"
+		let arr = db.query(sql)
+		if arr.count == 0 {
+			return nil
+		}
+		for (key, _) in data {
+			let val = arr[0][key]
+			row.setValue(val, forKey:key)
+		}
+		return row
+	}
+	
+	class func row(rowNumber:Int, filter:String="", order:String="") -> SQLTable? {
+		let row = self.init()
+		let data = row.values()
+		let db = SQLiteDB.sharedInstance()
+		var sql = "SELECT * FROM \(table)"
+		if !filter.isEmpty {
+			sql += " WHERE \(filter)"
+		}
+		if !order.isEmpty {
+			sql += " ORDER BY \(order)"
+		}
+		// Limit to specified row
+		sql += " LIMIT 1 OFFSET \(rowNumber-1)"
+		let arr = db.query(sql)
+		if arr.count == 0 {
+			return nil
+		}
+		for (key, _) in data {
+			let val = arr[0][key]
+			row.setValue(val, forKey:key)
+		}
+		return row
+	}
 	
 	func save() -> (success:Bool, id:Int) {
-		assert(!table.isEmpty, "You should define the table name in the sub-class")
 		let db = SQLiteDB.sharedInstance()
-		let key = primaryKey()
-		self.data = values()
+		let key = SQLTable.primaryKey()
+		if data == nil {
+			data = values()
+		}
 		var insert = true
 		if let rid = data[key] {
-			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(rid)"
+			let sql = "SELECT COUNT(*) AS count FROM \(SQLTable.table) WHERE \(SQLTable.primaryKey())=\(rid)"
 			let arr = db.query(sql)
 			if arr.count == 1 {
 				if let cnt = arr[0]["count"] as? Int {
@@ -66,6 +111,7 @@ class SQLTable:NSObject {
 		return (res, Int(rc))
 	}
 	
+	// MARK:- Private Methods
 //	private func properties() -> [String] {
 //		var res = [String]()
 //		for c in Mirror(reflecting:self).children {
@@ -109,12 +155,12 @@ class SQLTable:NSObject {
 		var params:[AnyObject]? = nil
 		if forInsert {
 			// INSERT INTO tasks(task, categoryID) VALUES ('\(txtTask.text)', 1)
-			sql = "INSERT INTO \(table)("
+			sql = "INSERT INTO \(SQLTable.table)("
 		} else {
 			// UPDATE tasks SET task = ? WHERE categoryID = ?
-			sql = "UPDATE \(table) SET "
+			sql = "UPDATE \(SQLTable.table) SET "
 		}
-		let pkey = primaryKey()
+		let pkey = SQLTable.primaryKey()
 		var wsql = ""
 		var rid:AnyObject?
 		var first = true
