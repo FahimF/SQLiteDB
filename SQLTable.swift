@@ -9,6 +9,7 @@
 import UIKit
 
 class SQLTable:NSObject {
+	private var table:String!
 	private var data:[String:AnyObject]!
 	
 	private static var table:String {
@@ -18,9 +19,12 @@ class SQLTable:NSObject {
 	
 	required override init() {
 		super.init()
+		// Table name
+		let str = self.classForCoder
+		self.table = "\(str)s".lowercaseString
 	}
 	
-	class func primaryKey() -> String {
+	func primaryKey() -> String {
 		return "id"
 	}
 	
@@ -49,7 +53,7 @@ class SQLTable:NSObject {
 		let row = self.init()
 		let data = row.values()
 		let db = SQLiteDB.sharedInstance()
-		let sql = "SELECT * FROM \(table) WHERE \(primaryKey())=\(rid)"
+		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(rid)"
 		let arr = db.query(sql)
 		if arr.count == 0 {
 			return nil
@@ -87,13 +91,13 @@ class SQLTable:NSObject {
 	
 	func save() -> (success:Bool, id:Int) {
 		let db = SQLiteDB.sharedInstance()
-		let key = SQLTable.primaryKey()
+		let key = primaryKey()
 		if data == nil {
 			data = values()
 		}
 		var insert = true
 		if let rid = data[key] {
-			let sql = "SELECT COUNT(*) AS count FROM \(SQLTable.table) WHERE \(SQLTable.primaryKey())=\(rid)"
+			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(rid)"
 			let arr = db.query(sql)
 			if arr.count == 1 {
 				if let cnt = arr[0]["count"] as? Int {
@@ -155,12 +159,12 @@ class SQLTable:NSObject {
 		var params:[AnyObject]? = nil
 		if forInsert {
 			// INSERT INTO tasks(task, categoryID) VALUES ('\(txtTask.text)', 1)
-			sql = "INSERT INTO \(SQLTable.table)("
+			sql = "INSERT INTO \(table)("
 		} else {
 			// UPDATE tasks SET task = ? WHERE categoryID = ?
-			sql = "UPDATE \(SQLTable.table) SET "
+			sql = "UPDATE \(table) SET "
 		}
-		let pkey = SQLTable.primaryKey()
+		let pkey = primaryKey()
 		var wsql = ""
 		var rid:AnyObject?
 		var first = true
