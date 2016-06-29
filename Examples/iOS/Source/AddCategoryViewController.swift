@@ -24,7 +24,7 @@ class AddCategoryViewController: UITableViewController {
 		// Save task
 		let cat = Category()
 		cat.name = txtCat.text!
-		if cat.save().success {
+		if cat.save() != 0 {
 			let alert = UIAlertView(title:"SQLiteDB", message:"Category successfully saved!", delegate:nil, cancelButtonTitle: "OK")
 			alert.show()
 		}

@@ -24,7 +24,7 @@ class AddTaskViewController: UITableViewController {
 		// Save task
 		let task = Task()
 		task.task = txtTask.text!
-		if task.save().success {
+		if task.save() != 0 {
 			let alert = UIAlertView(title:"SQLiteDB", message:"Task successfully saved!", delegate:nil, cancelButtonTitle: "OK")
 			alert.show()
 		}

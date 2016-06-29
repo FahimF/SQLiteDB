@@ -6,18 +6,14 @@
 //  Copyright © 2015 RookSoft Pte. Ltd. All rights reserved.
 //
 
-import UIKit
+#if os(iOS)
+	import UIKit
+#else
+	import AppKit
+#endif
 
 class Task:SQLTable {
 	var id = -1
 	var task = ""
 	var categoryID = -1
-	
-	init() {
-		super.init(tableName:"tasks")
-	}
-
-	required convenience init(tableName:String) {
-		self.init()
-	}
 }

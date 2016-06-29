@@ -10,10 +10,12 @@ import Cocoa
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
-	let db = SQLiteDB.sharedInstance()
+	let db = SQLiteDB.sharedInstance
 
 	func applicationDidFinishLaunching(notification: NSNotification) {
 		// Insert code here to initialize your application
+		let cats = Category.rows(order:"id ASC") as! [Category]
+		NSLog("Got categories: \(cats)")
 	}
 	
 	func applicationWillTerminate(aNotification: NSNotification) {

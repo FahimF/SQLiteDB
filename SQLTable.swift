@@ -6,69 +6,115 @@
 //  Copyright © 2015 RookSoft Pte. Ltd. All rights reserved.
 //
 
-import UIKit
+#if os(iOS)
+	import UIKit
+#else
+	import AppKit
+#endif
 
+@objc(SQLTable)
 class SQLTable:NSObject {
 	private var table:String!
-	private var data:[String:AnyObject]!
 	
 	private static var table:String {
-		let str = self.classForCoder()
-		return "\(str)s".lowercaseString
+		return "\(self.classForCoder())s".lowercaseString
 	}
 	
 	required override init() {
 		super.init()
 		// Table name
-		let str = self.classForCoder
-		self.table = "\(str)s".lowercaseString
+		self.table = "\(self.classForCoder)s".lowercaseString
 	}
 	
+	// MARK:- Table property management
 	func primaryKey() -> String {
 		return "id"
 	}
 	
-	class func allRows(order:String="") -> [SQLTable] {
-		var res = [SQLTable]()
-		let tmp = self.init()
-		let data = tmp.values()
-		let db = SQLiteDB.sharedInstance()
+	func ignoredKeys() -> [String] {
+		return []
+	}
+	
+	func setPrimaryKey(val:AnyObject) {
+		setValue(val, forKey:primaryKey())
+	}
+
+	func getPrimaryKey() -> AnyObject? {
+		return valueForKey(primaryKey())
+	}
+	
+	// MARK:- Class Methods
+	class func rows(filter:String="", order:String="", limit:Int=0) -> [SQLTable] {
 		var sql = "SELECT * FROM \(table)"
+		if !filter.isEmpty {
+			sql += " WHERE \(filter)"
+		}
 		if !order.isEmpty {
 			sql += " ORDER BY \(order)"
 		}
-		let arr = db.query(sql)
+		if limit > 0 {
+			sql += " LIMIT 0, \(limit)"
+		}
+		return self.rowsFor(sql)
+	}
+
+	class func rowsFor(sql:String="") -> [SQLTable] {
+		var res = [SQLTable]()
+		let tmp = self.init()
+		let data = tmp.values()
+		let db = SQLiteDB.sharedInstance
+		let fsql = sql.isEmpty ? "SELECT * FROM \(table)" : sql
+		let arr = db.query(fsql)
 		for row in arr {
 			let t = self.init()
 			for (key, _) in data {
-				let val = row[key]
-				t.setValue(val, forKey:key)
+				if let val = row[key] {
+					t.setValue(val, forKey:key)
+				}
 			}
 			res.append(t)
 		}
 		return res
+		
 	}
-
+	
 	class func rowByID(rid:Int) -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
-		let db = SQLiteDB.sharedInstance()
+		let db = SQLiteDB.sharedInstance
 		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(rid)"
 		let arr = db.query(sql)
 		if arr.count == 0 {
 			return nil
 		}
 		for (key, _) in data {
-			let val = arr[0][key]
-			row.setValue(val, forKey:key)
+			if let val = arr[0][key] {
+				row.setValue(val, forKey:key)
+			}
 		}
 		return row
+	}
+	
+	class func count(filter:String="") -> Int {
+		let db = SQLiteDB.sharedInstance
+		var sql = "SELECT COUNT(*) AS count FROM \(table)"
+		if !filter.isEmpty {
+			sql += " WHERE \(filter)"
+		}
+		let arr = db.query(sql)
+		if arr.count == 0 {
+			return 0
+		}
+		if let val = arr[0]["count"] as? Int {
+			return val
+		}
+		return 0
 	}
 	
 	class func row(rowNumber:Int, filter:String="", order:String="") -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
-		let db = SQLiteDB.sharedInstance()
+		let db = SQLiteDB.sharedInstance
 		var sql = "SELECT * FROM \(table)"
 		if !filter.isEmpty {
 			sql += " WHERE \(filter)"
@@ -83,18 +129,24 @@ class SQLTable:NSObject {
 			return nil
 		}
 		for (key, _) in data {
-			let val = arr[0][key]
-			row.setValue(val, forKey:key)
+			if let val = arr[0][key] {
+				row.setValue(val, forKey:key)
+			}
 		}
 		return row
 	}
 	
-	func save() -> (success:Bool, id:Int) {
-		let db = SQLiteDB.sharedInstance()
+	class func zap() {
+		let db = SQLiteDB.sharedInstance
+		let sql = "DELETE FROM \(table)"
+		db.execute(sql)
+	}
+	
+	// MARK:- Public Methods
+	func save() -> Int {
+		let db = SQLiteDB.sharedInstance
 		let key = primaryKey()
-		if data == nil {
-			data = values()
-		}
+		let data = values()
 		var insert = true
 		if let rid = data[key] {
 			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(rid)"
@@ -106,13 +158,45 @@ class SQLTable:NSObject {
 			}
 		}
 		// Insert or update
-		let (sql, params) = getSQL(insert)
+		let (sql, params) = getSQL(data, forInsert:insert)
 		let rc = db.execute(sql, parameters:params)
+		// Update primary key
+		let rid = Int(rc)
+		if insert {
+			setValue(rid, forKey:key)
+		}
 		let res = (rc != 0)
 		if !res {
 			NSLog("Error saving record!")
 		}
-		return (res, Int(rc))
+		return rid
+	}
+	
+	func delete() -> Bool {
+		let db = SQLiteDB.sharedInstance
+		let key = primaryKey()
+		let data = values()
+		if let rid = data[key] {
+			let sql = "DELETE FROM \(table) WHERE \(primaryKey())=\(rid)"
+			let rc = db.execute(sql)
+			return (rc != 0)
+		}
+		return false
+	}
+	
+	func refresh() {
+		let db = SQLiteDB.sharedInstance
+		let key = primaryKey()
+		let data = values()
+		if let rid = data[key] {
+			let sql = "SELECT * FROM \(table) WHERE \(primaryKey())=\(rid)"
+			let arr = db.query(sql)
+			for (key, _) in data {
+				if let val = arr[0][key] {
+					setValue(val, forKey:key)
+				}
+			}
+		}
 	}
 	
 	// MARK:- Private Methods
@@ -131,6 +215,10 @@ class SQLTable:NSObject {
 		let obj = Mirror(reflecting:self)
 		for (_, attr) in obj.children.enumerate() {
 			if let name = attr.label {
+				// Ignore special properties
+				if ignoredKeys().contains(name) {
+					continue
+				}
 				res[name] = getValue(attr.value as! AnyObject)
 			}
 		}
@@ -150,11 +238,13 @@ class SQLTable:NSObject {
 			return val as! Bool
 		} else if val is NSDate {
 			return val as! NSDate
+		} else if val is NSData {
+			return val as! NSData
 		}
 		return "nAn"
 	}
 	
-	private func getSQL(forInsert:Bool = true) -> (String, [AnyObject]?) {
+	private func getSQL(data:[String:AnyObject], forInsert:Bool = true) -> (String, [AnyObject]?) {
 		var sql = ""
 		var params:[AnyObject]? = nil
 		if forInsert {
@@ -188,11 +278,11 @@ class SQLTable:NSObject {
 				params = [AnyObject]()
 			}
 			if forInsert {
-				sql += first ? key : "," + key
+				sql += first ? "\(key)" : ", \(key)"
 				wsql += first ? " VALUES (?" : ", ?"
 				params!.append(val)
 			} else {
-				sql += first ? key + " = ?" : ", " + key + " = ?"
+				sql += first ? "\(key) = ?" : ", \(key) = ?"
 				params!.append(val)
 			}
 			first = false
@@ -204,7 +294,7 @@ class SQLTable:NSObject {
 			sql += wsql
 			params!.append(rid!)
 		}
-		NSLog("Final SQL: \(sql) with parameters: \(params)")
+//		NSLog("Final SQL: \(sql) with parameters: \(params)")
 		return (sql, params)
 	}
 }

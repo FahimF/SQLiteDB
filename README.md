@@ -3,6 +3,8 @@ SQLiteDB
 
 This is a simple and lightweight SQLite wrapper for Swift. It allows all basic SQLite functionality including being able to bind values to parameters in an SQL statement. The framework does require an initial SQLite database to be included in your project - it does not create the database for you via code.
 
+**Update: (29 Jun 2016)** The latest version of SQLiteDB has the `SQLTable` subclasses infer the underlying table name by adding an "s" to the end of the subclass name in lower-case - for example, an `SQLTable` subclass named `Category` will look for an underlying table named `Categorys` in the  database. Please be aware of this change when using `SQLTable` subclasses. (See the included iOS sample project for an example of this.)
+
 **Update: (6 Nov 2015)** The latest version of SQLiteDB will break existing code since the `SQLRow` and `SQLColumn` classes have been removed. Instead, there's a new `SQLTable` class which can be sub-classed to model your individual database tables. (See the included iOS sample project for details.)
 
 **Important:** If you are new to Swift or have not bothered to read up on the Swift documentation, please do not contact me about Swift functionality. I just don't have the time to answer your queries about Swift. On the other hand, if you're not looking for free advice but are willing to pay for my time, do feel free to contact me :)
@@ -19,7 +21,7 @@ Adding to Your Project
 
 * If you didn't have a bridging header file, make sure that you modify your project settings to point to the new bridging header file. This will be under  **Build Settings** for your target and will be named **Objective-C Bridging Header**.
 
-* Add the SQLite library (libsqlite3.0.dylib) to your project under **Build Phases** - **Link Binary With Libraries** section.
+* Add the SQLite library (libsqlite3.0.dylib or libsqlite3.tbd) to your project under **Build Phases** - **Link Binary With Libraries** section.
 
 That's it. You're set!
 
@@ -27,7 +29,7 @@ Usage
 ---
 * You can gain access to the shared database instance as follows:
 ```swift
-	let db = SQLiteDB.sharedInstance()
+	let db = SQLiteDB.sharedInstance
 ```
 
 * You can make SQL queries using the `query` method (the results are returned as an array of dictionaries where the key is a `String` and the value is of type `AnyObject`):
@@ -60,7 +62,7 @@ In the above, `db` is a reference to the shared SQLite database instance. You ca
 
 * The `esc` method which was previously available in SQLiteDB is no longer there. So, for instance, if you need to escape strings with embedded quotes, you should use the SQLite parameter binding functionality as shown above.
 
-* If you would prefer to model your database tables as classes, SQLiteDB also provides an `SQLTable` class which does most of the heavy lifting for you. If you create a sub-class of `SQLTable`, define properties where the names match the column names in your SQLite table, then you can use the sub-class to save to/update the database without having to write all the necessary code yourself. Refer to the sample iOS project for details about how to implement this.
+* If you would prefer to model your database tables as classes, SQLiteDB also provides an `SQLTable` class which does most of the heavy lifting for you. If you create a sub-class of `SQLTable`, define properties where the names match the column names in your SQLite table, then you can use the sub-class to save to/update the database without having to write all the necessary boilerplate code yourself. Refer to the sample iOS project for details about how to implement this.
 
 Questions?
 ---

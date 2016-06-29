@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		DD04B4791BEC367E008E1261 /* SQLTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4781BEC367E008E1261 /* SQLTable.swift */; };
 		DD04B4811BEC511B008E1261 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD04B47F1BEC511B008E1261 /* Launch Screen.storyboard */; };
-		DD04B4851BEC6D6D008E1261 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4831BEC6D6D008E1261 /* Category.swift */; };
-		DD04B4861BEC6D6D008E1261 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4841BEC6D6D008E1261 /* Task.swift */; };
 		DD18184219D56B5B0053E68E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD18183519D56B5B0053E68E /* Main.storyboard */; };
 		DD18184319D56B5B0053E68E /* data.db in Resources */ = {isa = PBXBuildFile; fileRef = DD18183719D56B5B0053E68E /* data.db */; };
 		DD18184419D56B5B0053E68E /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD18183819D56B5B0053E68E /* Images.xcassets */; };
@@ -22,13 +20,13 @@
 		DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184C19D56BAF0053E68E /* SQLiteDB.swift */; };
 		DD18184F19D56BAF0053E68E /* String-Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184D19D56BAF0053E68E /* String-Extras.swift */; };
 		DD18185119D56CDB0053E68E /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DD18185019D56CDB0053E68E /* libsqlite3.dylib */; };
+		DD7FFDBA1D23626C003EB06B /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB81D23626C003EB06B /* Category.swift */; };
+		DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB91D23626C003EB06B /* Task.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		DD04B4781BEC367E008E1261 /* SQLTable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLTable.swift; path = ../../SQLTable.swift; sourceTree = "<group>"; };
 		DD04B4801BEC511B008E1261 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = "Base.lproj/Launch Screen.storyboard"; sourceTree = "<group>"; };
-		DD04B4831BEC6D6D008E1261 /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
-		DD04B4841BEC6D6D008E1261 /* Task.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 		DD18183619D56B5B0053E68E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		DD18183719D56B5B0053E68E /* data.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = data.db; sourceTree = "<group>"; };
 		DD18183819D56B5B0053E68E /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -43,6 +41,8 @@
 		DD18184D19D56BAF0053E68E /* String-Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "String-Extras.swift"; path = "../../String-Extras.swift"; sourceTree = "<group>"; };
 		DD18185019D56CDB0053E68E /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
 		DD228C9319486E0400B74370 /* SQLiteDB-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SQLiteDB-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD7FFDB81D23626C003EB06B /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		DD7FFDB91D23626C003EB06B /* Task.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,15 +57,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		DD04B4821BEC6D6D008E1261 /* Shared */ = {
-			isa = PBXGroup;
-			children = (
-				DD04B4831BEC6D6D008E1261 /* Category.swift */,
-				DD04B4841BEC6D6D008E1261 /* Task.swift */,
-			);
-			path = Shared;
-			sourceTree = "<group>";
-		};
 		DD04E1CF195C195B00494935 /* Third-party */ = {
 			isa = PBXGroup;
 			children = (
@@ -89,7 +80,6 @@
 		DD18183B19D56B5B0053E68E /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				DD04B4821BEC6D6D008E1261 /* Shared */,
 				DD18183C19D56B5B0053E68E /* AddCategoryViewController.swift */,
 				DD18183D19D56B5B0053E68E /* AddTaskViewController.swift */,
 				DD18183E19D56B5B0053E68E /* AppDelegate.swift */,
@@ -112,6 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				DD18183B19D56B5B0053E68E /* Source */,
+				DD7FFDB71D23626C003EB06B /* Shared */,
 				DD18183419D56B5B0053E68E /* Resources */,
 				DD04E1CF195C195B00494935 /* Third-party */,
 				DD18185219D56DBB0053E68E /* Frameworks */,
@@ -136,6 +127,16 @@
 			);
 			name = "SQLiteDB-Swift";
 			path = "../../Frameworks/SQLiteDB-Swift";
+			sourceTree = "<group>";
+		};
+		DD7FFDB71D23626C003EB06B /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				DD7FFDB81D23626C003EB06B /* Category.swift */,
+				DD7FFDB91D23626C003EB06B /* Task.swift */,
+			);
+			name = Shared;
+			path = ../Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -219,11 +220,11 @@
 			files = (
 				DD18184919D56B5B0053E68E /* AppDelegate.swift in Sources */,
 				DD04B4791BEC367E008E1261 /* SQLTable.swift in Sources */,
-				DD04B4861BEC6D6D008E1261 /* Task.swift in Sources */,
+				DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */,
 				DD18184B19D56B5B0053E68E /* TasksViewController.swift in Sources */,
 				DD18184719D56B5B0053E68E /* AddCategoryViewController.swift in Sources */,
 				DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */,
-				DD04B4851BEC6D6D008E1261 /* Category.swift in Sources */,
+				DD7FFDBA1D23626C003EB06B /* Category.swift in Sources */,
 				DD18184A19D56B5B0053E68E /* CategoryViewController.swift in Sources */,
 				DD18184F19D56BAF0053E68E /* String-Extras.swift in Sources */,
 				DD18184819D56B5B0053E68E /* AddTaskViewController.swift in Sources */,

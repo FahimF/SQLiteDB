@@ -11,7 +11,7 @@ import UIKit
 class CategoryViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 	@IBOutlet var table:UITableView!
 	var data = [Category]()
-	let db = SQLiteDB.sharedInstance()
+	let db = SQLiteDB.sharedInstance
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -19,7 +19,7 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
-		data = Category().allRows("name ASC")
+		data = Category.rows(order:"name ASC") as! [Category]
 		table.reloadData()
 	}
 	

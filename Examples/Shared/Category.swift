@@ -6,17 +6,17 @@
 //  Copyright © 2015 RookSoft Pte. Ltd. All rights reserved.
 //
 
-import UIKit
+#if os(iOS)
+	import UIKit
+#else
+	import AppKit
+#endif
 
 class Category:SQLTable {
 	var id = -1
 	var name = ""
 	
-	init() {
-		super.init(tableName:"categories")
-	}
-	
-	required convenience init(tableName:String) {
-		self.init()
+	override var description:String {
+		return "id: \(id), name: \(name)"
 	}
 }

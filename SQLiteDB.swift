@@ -19,57 +19,25 @@ private let SQLITE_STATIC = unsafeBitCast(0, sqlite3_destructor_type.self)
 private let SQLITE_TRANSIENT = unsafeBitCast(-1, sqlite3_destructor_type.self)
 
 // MARK:- SQLiteDB Class - Does all the work
-class SQLiteDB {
+@objc(SQLiteDB)
+class SQLiteDB:NSObject {
 	let DB_NAME = "data.db"
 	let QUEUE_LABEL = "SQLiteDB"
+	static let sharedInstance = SQLiteDB()
 	private var db:COpaquePointer = nil
-	private var queue:dispatch_queue_t
-	private var fmt = NSDateFormatter()
-	private var GROUP = ""
+	private var queue:dispatch_queue_t!
+	private let fmt = NSDateFormatter()
+	private var path:String!
 	
-	struct Static {
-		static var instance:SQLiteDB? = nil
-		static var token:dispatch_once_t = 0
-	}
-	
-	class func sharedInstance() -> SQLiteDB! {
-		dispatch_once(&Static.token) {
-			Static.instance = self.init(gid:"")
-		}
-		return Static.instance!
-	}
-	
-	class func sharedInstance(gid:String) -> SQLiteDB! {
-		dispatch_once(&Static.token) {
-			Static.instance = self.init(gid:gid)
-		}
-		return Static.instance!
-	}
- 
-	required init(gid:String) {
-		assert(Static.instance == nil, "Singleton already initialized!")
-		GROUP = gid
-		// Set queue
-		queue = dispatch_queue_create(QUEUE_LABEL, nil)
-		fmt.timeZone = NSTimeZone(forSecondsFromGMT:0)
+	private override init() {
+		super.init()
 		// Set up for file operations
 		let fm = NSFileManager.defaultManager()
-		let dbName:String = String.fromCString(DB_NAME)!
-		var docDir = ""
-		// Is this for an app group?
-		if GROUP.isEmpty {
-			// Get path to DB in Documents directory
-			docDir = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] 
-		} else {
-			// Get path to shared group folder
-			if let url = fm.containerURLForSecurityApplicationGroupIdentifier(GROUP) {
-				docDir = url.path!
-			} else {
-				assert(false, "Error getting container URL for group: \(GROUP)")
-			}
-		}
+		let dbName = String.fromCString(DB_NAME)!
+		// Get path to DB in Documents directory
+		let docDir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)[0]
 		let path = (docDir as NSString).stringByAppendingPathComponent(dbName)
-		print("Database path: \(path)")
+//		NSLog("Database path: \(path)")
 		// Check if copy of DB is there in Documents directory
 		if !(fm.fileExistsAtPath(path)) {
 			// The database does not exist, so copy to Documents directory
@@ -83,56 +51,50 @@ class SQLiteDB {
 				return
 			}
 		}
-		// Open the DB
-		let cpath = path.cStringUsingEncoding(NSUTF8StringEncoding)
-		let error = sqlite3_open(cpath!, &db)
-		if error != SQLITE_OK {
-			// Open failed, close DB and fail
-			print("SQLiteDB - failed to open DB!")
-			sqlite3_close(db)
-		}
-		fmt.dateFormat = "YYYY-MM-dd HH:mm:ss"
+		openDB(path)
+	}
+	
+	private init(path:String) {
+		super.init()
+		openDB(path)
 	}
 	
 	deinit {
-		closeDatabase()
+		closeDB()
 	}
  
-	private func closeDatabase() {
-		if db != nil {
-			// Get launch count value
-			let ud = NSUserDefaults.standardUserDefaults()
-			var launchCount = ud.integerForKey("LaunchCount")
-			launchCount--
-			print("SQLiteDB - Launch count \(launchCount)")
-			var clean = false
-			if launchCount < 0 {
-				clean = true
-				launchCount = 500
-			}
-			ud.setInteger(launchCount, forKey: "LaunchCount")
-			ud.synchronize()
-			// Do we clean DB?
-			if !clean {
-				sqlite3_close(db)
-				return
-			}
-			// Clean DB
-			print("SQLiteDB - Optimize DB")
-			let sql = "VACUUM; ANALYZE"
-			if execute(sql) != SQLITE_OK {
-				print("SQLiteDB - Error cleaning DB")
-			}
-			sqlite3_close(db)
+	override var description:String {
+		return "SQLiteDB: \(path)"
+	}
+	
+	// MARK:- Class Methods
+	class func openRO(path:String) -> SQLiteDB {
+		let db = SQLiteDB(path:path)
+		return db
+	}
+	
+	// MARK:- Public Methods
+	func dbDate(dt:NSDate) -> String {
+		return fmt.stringFromDate(dt)
+	}
+	
+	func dbDateFromString(str:String, format:String="") -> NSDate? {
+		let dtFormat = fmt.dateFormat
+		if !format.isEmpty {
+			fmt.dateFormat = format
 		}
+		let dt = fmt.dateFromString(str)
+		if !format.isEmpty {
+			fmt.dateFormat = dtFormat
+		}
+		return dt
 	}
 	
 	// Execute SQL with parameters and return result code
 	func execute(sql:String, parameters:[AnyObject]?=nil)->CInt {
 		var result:CInt = 0
 		dispatch_sync(queue) {
-			let stmt = self.prepare(sql, params:parameters)
-			if stmt != nil {
+			if let stmt = self.prepare(sql, params:parameters) {
 				result = self.execute(stmt, sql:sql)
 			}
 		}
@@ -143,8 +105,7 @@ class SQLiteDB {
 	func query(sql:String, parameters:[AnyObject]?=nil)->[[String:AnyObject]] {
 		var rows = [[String:AnyObject]]()
 		dispatch_sync(queue) {
-			let stmt = self.prepare(sql, params:parameters)
-			if stmt != nil {
+			if let stmt = self.prepare(sql, params:parameters) {
 				rows = self.query(stmt, sql:sql)
 			}
 		}
@@ -168,8 +129,70 @@ class SQLiteDB {
 		}
 	}
 	
+	// Versioning
+	func getDBVersion() -> Int {
+		var version = 0
+		let arr = query("PRAGMA user_version")
+		if arr.count == 1 {
+			version = arr[0]["user_version"] as! Int
+		}
+		return version
+	}
+	
+	// Sets the 'user_version' value, a user-defined version number for the database. This is useful for managing migrations.
+	func setDBVersion(version:Int) {
+		execute("PRAGMA user_version=\(version)")
+	}
+	
+	// MARK:- Private Methods
+	private func openDB(path:String) {
+		// Set up essentials
+		queue = dispatch_queue_create(QUEUE_LABEL, nil)
+		fmt.timeZone = NSTimeZone(forSecondsFromGMT:0)
+		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+		// Open the DB
+		let cpath = path.cStringUsingEncoding(NSUTF8StringEncoding)
+		let error = sqlite3_open(cpath!, &db)
+		if error != SQLITE_OK {
+			// Open failed, close DB and fail
+			print("SQLiteDB - failed to open DB!")
+			sqlite3_close(db)
+			return
+		}
+		print("SQLiteDB opened!")
+	}
+	
+	private func closeDB() {
+		if db != nil {
+			// Get launch count value
+			let ud = NSUserDefaults.standardUserDefaults()
+			var launchCount = ud.integerForKey("LaunchCount")
+			launchCount -= 1
+			print("SQLiteDB - Launch count \(launchCount)")
+			var clean = false
+			if launchCount < 0 {
+				clean = true
+				launchCount = 500
+			}
+			ud.setInteger(launchCount, forKey:"LaunchCount")
+			ud.synchronize()
+			// Do we clean DB?
+			if !clean {
+				sqlite3_close(db)
+				return
+			}
+			// Clean DB
+			print("SQLiteDB - Optimize DB")
+			let sql = "VACUUM; ANALYZE"
+			if execute(sql) != SQLITE_OK {
+				print("SQLiteDB - Error cleaning DB")
+			}
+			sqlite3_close(db)
+		}
+	}
+	
 	// Private method which prepares the SQL
-	private func prepare(sql:String, params:[AnyObject]?)->COpaquePointer {
+	private func prepare(sql:String, params:[AnyObject]?) -> COpaquePointer? {
 		var stmt:COpaquePointer = nil
 		let cSql = sql.cStringUsingEncoding(NSUTF8StringEncoding)
 		// Prepare
@@ -195,7 +218,7 @@ class SQLiteDB {
 			var flag:CInt = 0
 			// Text & BLOB values passed to a C-API do not work correctly if they are not marked as transient.
 			for ndx in 1...cnt {
-//				println("Binding: \(params![ndx-1]) at Index: \(ndx)")
+//				NSLog("Binding: \(params![ndx-1]) at Index: \(ndx)")
 				// Check for data types
 				if let txt = params![ndx-1] as? String {
 					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, SQLITE_TRANSIENT)
@@ -246,7 +269,7 @@ class SQLiteDB {
 		} else if upp.hasPrefix("DELETE") || upp.hasPrefix("UPDATE") {
 			var cnt = sqlite3_changes(self.db)
 			if cnt == 0 {
-				cnt++
+				cnt += 1
 			}
 			result = CInt(cnt)
 		} else {
@@ -284,7 +307,7 @@ class SQLiteDB {
 				let key = columnNames[Int(index)]
 				let type = columnTypes[Int(index)]
 				if let val = getColumnValue(index, type:type, stmt:stmt) {
-//						println("Column type:\(type) with value:\(val)")
+//						NSLog("Column type:\(type) with value:\(val)")
 					row[key] = val
 				}
 			}
@@ -308,18 +331,18 @@ class SQLiteDB {
 		let realTypes = ["DECIMAL", "DOUBLE", "DOUBLE PRECISION", "FLOAT", "NUMERIC", "REAL"]
 		// Determine type of column - http://www.sqlite.org/c3ref/c_blob.html
 		let buf = sqlite3_column_decltype(stmt, index)
-//		println("SQLiteDB - Got column type: \(buf)")
+//		NSLog("SQLiteDB - Got column type: \(buf)")
 		if buf != nil {
 			var tmp = String.fromCString(buf)!.uppercaseString
 			// Remove brackets
 			let pos = tmp.positionOf("(")
 			if pos > 0 {
-				tmp = tmp.subStringTo(pos)
+				tmp = tmp.subString(0, length:pos)
 			}
 			// Remove unsigned?
 			// Remove spaces
 			// Is the data type in any of the pre-set values?
-//			println("SQLiteDB - Cleaned up column type: \(tmp)")
+//			NSLog("SQLiteDB - Cleaned up column type: \(tmp)")
 			if intTypes.contains(tmp) {
 				return SQLITE_INTEGER
 			}
@@ -363,7 +386,7 @@ class SQLiteDB {
 		if type == SQLITE_BLOB {
 			let data = sqlite3_column_blob(stmt, index)
 			let size = sqlite3_column_bytes(stmt, index)
-			let val = NSData(bytes:data, length: Int(size))
+			let val = NSData(bytes:data, length:Int(size))
 			return val
 		}
 		// Null

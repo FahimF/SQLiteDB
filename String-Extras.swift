@@ -23,23 +23,15 @@ extension String {
 		return pos
 	}
 	
-	func subStringFrom(pos:Int)->String {
-		var substr = ""
-		let start = self.startIndex.advancedBy(pos)
-		let end = self.endIndex
-//		println("String: \(self), start:\(start), end: \(end)")
-		let range = start..<end
-		substr = self[range]
-//		println("Substring: \(substr)")
-		return substr
-	}
-	
-	func subStringTo(pos:Int)->String {
-		var substr = ""
-		let end = self.startIndex.advancedBy(pos-1)
-		let range = self.startIndex...end
-		substr = self[range]
-		return substr
+	func subString(start:Int, length:Int = -1)->String {
+		var len = length
+		if len == -1 {
+			len = characters.count - start
+		}
+		let st = startIndex.advancedBy(start)
+		let en = st.advancedBy(len)
+		let range = st ..< en
+		return substringWithRange(range)
 	}
 	
 	func urlEncoded()->String {
@@ -54,7 +46,7 @@ extension String {
 	}
 	
 	func range()->Range<String.Index> {
-		return Range<String.Index>(start:startIndex, end:endIndex)
+		return Range<String.Index>(startIndex ..< endIndex)
 	}
 }
 

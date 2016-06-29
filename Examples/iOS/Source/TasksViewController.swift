@@ -18,8 +18,8 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
-//		data = Task().allRows("task ASC")
-		data = Task().allRows("id ASC")
+//		data = Task.rows(order:"task ASC") as! [Task]
+		data = Task.rows(order:"id ASC") as! [Task]
 		table.reloadData()
 	}
 	
