@@ -14,16 +14,18 @@
 
 @objc(SQLTable)
 class SQLTable:NSObject {
-	private var table:String!
+	private var table = ""
 	
 	private static var table:String {
-		return "\(self.classForCoder())s".lowercaseString
+		let tbl = "\(classForCoder())s".lowercased()
+		return tbl
 	}
 	
 	required override init() {
 		super.init()
 		// Table name
-		self.table = "\(self.classForCoder)s".lowercaseString
+		let tbl = "\(classForCoder)s".lowercased()
+		self.table = tbl
 	}
 	
 	// MARK:- Table property management
@@ -40,7 +42,7 @@ class SQLTable:NSObject {
 	}
 
 	func getPrimaryKey() -> AnyObject? {
-		return valueForKey(primaryKey())
+		return value(forKey: primaryKey())
 	}
 	
 	// MARK:- Class Methods
@@ -55,16 +57,16 @@ class SQLTable:NSObject {
 		if limit > 0 {
 			sql += " LIMIT 0, \(limit)"
 		}
-		return self.rowsFor(sql)
+		return rows(forSQL:sql)
 	}
 
-	class func rowsFor(sql:String="") -> [SQLTable] {
+	class func rows(forSQL:String="") -> [SQLTable] {
 		var res = [SQLTable]()
 		let tmp = self.init()
 		let data = tmp.values()
 		let db = SQLiteDB.sharedInstance
-		let fsql = sql.isEmpty ? "SELECT * FROM \(table)" : sql
-		let arr = db.query(fsql)
+		let fsql = forSQL.isEmpty ? "SELECT * FROM \(table)" : forSQL
+		let arr = db.query(sql:fsql)
 		for row in arr {
 			let t = self.init()
 			for (key, _) in data {
@@ -83,7 +85,7 @@ class SQLTable:NSObject {
 		let data = row.values()
 		let db = SQLiteDB.sharedInstance
 		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(rid)"
-		let arr = db.query(sql)
+		let arr = db.query(sql:sql)
 		if arr.count == 0 {
 			return nil
 		}
@@ -101,7 +103,7 @@ class SQLTable:NSObject {
 		if !filter.isEmpty {
 			sql += " WHERE \(filter)"
 		}
-		let arr = db.query(sql)
+		let arr = db.query(sql:sql)
 		if arr.count == 0 {
 			return 0
 		}
@@ -124,7 +126,7 @@ class SQLTable:NSObject {
 		}
 		// Limit to specified row
 		sql += " LIMIT 1 OFFSET \(rowNumber-1)"
-		let arr = db.query(sql)
+		let arr = db.query(sql:sql)
 		if arr.count == 0 {
 			return nil
 		}
@@ -139,7 +141,7 @@ class SQLTable:NSObject {
 	class func zap() {
 		let db = SQLiteDB.sharedInstance
 		let sql = "DELETE FROM \(table)"
-		db.execute(sql)
+		_ = db.execute(sql:sql)
 	}
 	
 	// MARK:- Public Methods
@@ -150,7 +152,7 @@ class SQLTable:NSObject {
 		var insert = true
 		if let rid = data[key] {
 			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(rid)"
-			let arr = db.query(sql)
+			let arr = db.query(sql:sql)
 			if arr.count == 1 {
 				if let cnt = arr[0]["count"] as? Int {
 					insert = (cnt == 0)
@@ -158,8 +160,8 @@ class SQLTable:NSObject {
 			}
 		}
 		// Insert or update
-		let (sql, params) = getSQL(data, forInsert:insert)
-		let rc = db.execute(sql, parameters:params)
+		let (sql, params) = getSQL(data:data, forInsert:insert)
+		let rc = db.execute(sql:sql, parameters:params)
 		// Update primary key
 		let rid = Int(rc)
 		if insert {
@@ -178,7 +180,7 @@ class SQLTable:NSObject {
 		let data = values()
 		if let rid = data[key] {
 			let sql = "DELETE FROM \(table) WHERE \(primaryKey())=\(rid)"
-			let rc = db.execute(sql)
+			let rc = db.execute(sql:sql)
 			return (rc != 0)
 		}
 		return false
@@ -190,7 +192,7 @@ class SQLTable:NSObject {
 		let data = values()
 		if let rid = data[key] {
 			let sql = "SELECT * FROM \(table) WHERE \(primaryKey())=\(rid)"
-			let arr = db.query(sql)
+			let arr = db.query(sql:sql)
 			for (key, _) in data {
 				if let val = arr[0][key] {
 					setValue(val, forKey:key)
@@ -213,13 +215,13 @@ class SQLTable:NSObject {
 	private func values() -> [String:AnyObject] {
 		var res = [String:AnyObject]()
 		let obj = Mirror(reflecting:self)
-		for (_, attr) in obj.children.enumerate() {
+		for (_, attr) in obj.children.enumerated() {
 			if let name = attr.label {
 				// Ignore special properties
 				if ignoredKeys().contains(name) {
 					continue
 				}
-				res[name] = getValue(attr.value as! AnyObject)
+				res[name] = getValue(val:attr.value as! AnyObject)
 			}
 		}
 		return res
