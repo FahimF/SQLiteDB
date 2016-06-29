@@ -3,7 +3,7 @@ SQLiteDB
 
 This is a simple and lightweight SQLite wrapper for Swift. It allows all basic SQLite functionality including being able to bind values to parameters in an SQL statement. The framework does require an initial SQLite database to be included in your project - it does not create the database for you via code.
 
-**Update: (29 Jun 2016)** The latest version of SQLiteDB has the `SQLTable` subclasses infer the underlying table name by adding an "s" to the end of the subclass name in lower-case - for example, an `SQLTable` subclass named `Category` will look for an underlying table named `Categorys` in the  database. Please be aware of this change when using `SQLTable` subclasses. (See the included iOS sample project for an example of this.)
+**Update: (29 Jun 2016)** The latest version of SQLiteDB has the `SQLTable` subclasses infer the underlying table name by adding an "s" to the end of the subclass name in lower-case - for example, an `SQLTable` subclass named `Category` will look for an underlying table named `categorys` in the  database. Please be aware of this change when using `SQLTable` subclasses. (See the included iOS sample project for an example of this.)
 
 **Update: (6 Nov 2015)** The latest version of SQLiteDB will break existing code since the `SQLRow` and `SQLColumn` classes have been removed. Instead, there's a new `SQLTable` class which can be sub-classed to model your individual database tables. (See the included iOS sample project for details.)
 
