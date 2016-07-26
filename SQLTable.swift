@@ -17,13 +17,17 @@ class SQLTable:NSObject {
 	private var table:String!
 	
 	private static var table:String {
-		return "\(self.classForCoder())s".lowercaseString
+		let cls = "\(self.classForCoder())".lowercaseString
+		let tnm = cls.hasSuffix("y") ? cls.substringToIndex(cls.endIndex.predecessor()) + "ies" : cls + "s"
+		return tnm
 	}
 	
 	required override init() {
 		super.init()
 		// Table name
-		self.table = "\(self.classForCoder)s".lowercaseString
+		let cls = "\(self.classForCoder)".lowercaseString
+		let tnm = cls.hasSuffix("y") ? cls.substringToIndex(cls.endIndex.predecessor()) + "ies" : cls + "s"
+		self.table = tnm
 	}
 	
 	// MARK:- Table property management
@@ -136,6 +140,20 @@ class SQLTable:NSObject {
 		return row
 	}
 	
+	class func remove(filter:String = "") -> Bool {
+		let db = SQLiteDB.sharedInstance
+		let sql:String
+		if filter.isEmpty {
+			// Delete all records
+			sql = "DELETE FROM \(table)"
+		} else {
+			// Use filter to delete
+			sql = "DELETE FROM \(table) WHERE \(filter)"
+		}
+		let rc = db.execute(sql)
+		return (rc != 0)
+	}
+	
 	class func zap() {
 		let db = SQLiteDB.sharedInstance
 		let sql = "DELETE FROM \(table)"
@@ -215,8 +233,8 @@ class SQLTable:NSObject {
 		let obj = Mirror(reflecting:self)
 		for (_, attr) in obj.children.enumerate() {
 			if let name = attr.label {
-				// Ignore special properties
-				if ignoredKeys().contains(name) {
+				// Ignore special properties and lazy vars
+				if ignoredKeys().contains(name) || name.hasSuffix(".storage") {
 					continue
 				}
 				res[name] = getValue(attr.value as! AnyObject)

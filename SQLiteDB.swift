@@ -35,7 +35,21 @@ class SQLiteDB:NSObject {
 		let fm = NSFileManager.defaultManager()
 		let dbName = String.fromCString(DB_NAME)!
 		// Get path to DB in Documents directory
-		let docDir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)[0]
+		var docDir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)[0]
+		// If macOS, add app name to path since otherwise, DB could possibly interfere with another app using SQLiteDB
+#if os(OSX)
+		let info = NSBundle.mainBundle().infoDictionary!
+		let appName = info["CFBundleName"] as! String
+		docDir = (docDir as NSString).stringByAppendingPathComponent(appName)
+		// Create folder if it does not exist
+		if !fm.fileExistsAtPath(docDir) {
+			do {
+				try fm.createDirectoryAtPath(docDir, withIntermediateDirectories:true, attributes:nil)
+			} catch {
+				NSLog("Error creating DB directory: \(docDir) on macOS")
+			}
+		}
+#endif
 		let path = (docDir as NSString).stringByAppendingPathComponent(dbName)
 //		NSLog("Database path: \(path)")
 		// Check if copy of DB is there in Documents directory
@@ -46,8 +60,8 @@ class SQLiteDB:NSObject {
 			do {
 				try fm.copyItemAtPath(from, toPath:path)
 			} catch let error as NSError {
-				print("SQLiteDB - failed to copy writable version of DB!")
-				print("Error - \(error.localizedDescription)")
+				NSLog("SQLiteDB - failed to copy writable version of DB!")
+				NSLog("Error - \(error.localizedDescription)")
 				return
 			}
 		}
@@ -148,6 +162,8 @@ class SQLiteDB:NSObject {
 	private func openDB(path:String) {
 		// Set up essentials
 		queue = dispatch_queue_create(QUEUE_LABEL, nil)
+		// You need to set the locale in order for the 24-hour date format to work correctly on devices where 24-hour format is turned off
+		fmt.locale = NSLocale(localeIdentifier:"en_US_POSIX")
 		fmt.timeZone = NSTimeZone(forSecondsFromGMT:0)
 		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
 		// Open the DB
@@ -155,11 +171,11 @@ class SQLiteDB:NSObject {
 		let error = sqlite3_open(cpath!, &db)
 		if error != SQLITE_OK {
 			// Open failed, close DB and fail
-			print("SQLiteDB - failed to open DB!")
+			NSLog("SQLiteDB - failed to open DB!")
 			sqlite3_close(db)
 			return
 		}
-		print("SQLiteDB opened!")
+		NSLog("SQLiteDB opened!")
 	}
 	
 	private func closeDB() {
@@ -168,7 +184,7 @@ class SQLiteDB:NSObject {
 			let ud = NSUserDefaults.standardUserDefaults()
 			var launchCount = ud.integerForKey("LaunchCount")
 			launchCount -= 1
-			print("SQLiteDB - Launch count \(launchCount)")
+			NSLog("SQLiteDB - Launch count \(launchCount)")
 			var clean = false
 			if launchCount < 0 {
 				clean = true
@@ -182,10 +198,10 @@ class SQLiteDB:NSObject {
 				return
 			}
 			// Clean DB
-			print("SQLiteDB - Optimize DB")
+			NSLog("SQLiteDB - Optimize DB")
 			let sql = "VACUUM; ANALYZE"
 			if execute(sql) != SQLITE_OK {
-				print("SQLiteDB - Error cleaning DB")
+				NSLog("SQLiteDB - Error cleaning DB")
 			}
 			sqlite3_close(db)
 		}
@@ -201,7 +217,7 @@ class SQLiteDB:NSObject {
 			sqlite3_finalize(stmt)
 			if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to prepare SQL: \(sql), Error: \(error)"
-				print(msg)
+				NSLog(msg)
 			}
 			return nil
 		}
@@ -212,7 +228,7 @@ class SQLiteDB:NSObject {
 			let cnt = CInt(params!.count)
 			if cntParams != cnt {
 				let msg = "SQLiteDB - failed to bind parameters, counts did not match. SQL: \(sql), Parameters: \(params)"
-				print(msg)
+				NSLog(msg)
 				return nil
 			}
 			var flag:CInt = 0
@@ -239,7 +255,7 @@ class SQLiteDB:NSObject {
 					sqlite3_finalize(stmt)
 					if let error = String.fromCString(sqlite3_errmsg(self.db)) {
 						let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
-						print(msg)
+						NSLog(msg)
 					}
 					return nil
 				}
@@ -256,7 +272,7 @@ class SQLiteDB:NSObject {
 			sqlite3_finalize(stmt)
 			if let err = String.fromCString(sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(err)"
-				print(msg)
+				NSLog(msg)
 			}
 			return 0
 		}
