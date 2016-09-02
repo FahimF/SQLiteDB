@@ -17,15 +17,19 @@ class SQLTable:NSObject {
 	private var table = ""
 	
 	private static var table:String {
-		let tbl = "\(classForCoder())s".lowercased()
-		return tbl
+		let cls = "\(classForCoder())".lowercased()
+		let ndx = cls.characters.index(before:cls.endIndex)
+		let tnm = cls.hasSuffix("y") ? cls.substring(to:ndx) + "ies" : cls + "s"
+		return tnm
 	}
 	
 	required override init() {
 		super.init()
 		// Table name
-		let tbl = "\(classForCoder)s".lowercased()
-		self.table = tbl
+		let cls = "\(classForCoder)".lowercased()
+		let ndx = cls.characters.index(before:cls.endIndex)
+		let tnm = cls.hasSuffix("y") ? cls.substring(to:ndx) + "ies" : cls + "s"
+		self.table = tnm
 	}
 	
 	// MARK:- Table property management
@@ -37,12 +41,12 @@ class SQLTable:NSObject {
 		return []
 	}
 	
-	func setPrimaryKey(val:AnyObject) {
+	func setPrimaryKey(val:Any) {
 		setValue(val, forKey:primaryKey())
 	}
 
-	func getPrimaryKey() -> AnyObject? {
-		return value(forKey: primaryKey())
+	func getPrimaryKey() -> Any? {
+		return value(forKey:primaryKey())
 	}
 	
 	// MARK:- Class Methods
@@ -57,15 +61,15 @@ class SQLTable:NSObject {
 		if limit > 0 {
 			sql += " LIMIT 0, \(limit)"
 		}
-		return rows(forSQL:sql)
+		return self.rowsFor(sql:sql)
 	}
 
-	class func rows(forSQL:String="") -> [SQLTable] {
+	class func rowsFor(sql:String="") -> [SQLTable] {
 		var res = [SQLTable]()
 		let tmp = self.init()
 		let data = tmp.values()
 		let db = SQLiteDB.sharedInstance
-		let fsql = forSQL.isEmpty ? "SELECT * FROM \(table)" : forSQL
+		let fsql = sql.isEmpty ? "SELECT * FROM \(table)" : sql
 		let arr = db.query(sql:fsql)
 		for row in arr {
 			let t = self.init()
@@ -136,6 +140,20 @@ class SQLTable:NSObject {
 			}
 		}
 		return row
+	}
+	
+	class func remove(filter:String = "") -> Bool {
+		let db = SQLiteDB.sharedInstance
+		let sql:String
+		if filter.isEmpty {
+			// Delete all records
+			sql = "DELETE FROM \(table)"
+		} else {
+			// Use filter to delete
+			sql = "DELETE FROM \(table) WHERE \(filter)"
+		}
+		let rc = db.execute(sql:sql)
+		return (rc != 0)
 	}
 	
 	class func zap() {
@@ -212,43 +230,43 @@ class SQLTable:NSObject {
 //		return res
 //	}
 	
-	private func values() -> [String:AnyObject] {
-		var res = [String:AnyObject]()
+	private func values() -> [String:Any] {
+		var res = [String:Any]()
 		let obj = Mirror(reflecting:self)
 		for (_, attr) in obj.children.enumerated() {
 			if let name = attr.label {
-				// Ignore special properties
-				if ignoredKeys().contains(name) {
+				// Ignore special properties and lazy vars
+				if ignoredKeys().contains(name) || name.hasSuffix(".storage") {
 					continue
 				}
-				res[name] = getValue(val:attr.value as! AnyObject)
+				res[name] = get(value:attr.value)
 			}
 		}
 		return res
 	}
 	
-	private func getValue(val:AnyObject) -> AnyObject {
-		if val is String {
-			return val as! String
-		} else if val is Int {
-			return val as! Int
-		} else if val is Float {
-			return val as! Float
-		} else if val is Double {
-			return val as! Double
-		} else if val is Bool {
-			return val as! Bool
-		} else if val is NSDate {
-			return val as! NSDate
-		} else if val is NSData {
-			return val as! NSData
+	private func get(value:Any) -> Any {
+		if value is String {
+			return value as! String
+		} else if value is Int {
+			return value as! Int
+		} else if value is Float {
+			return value as! Float
+		} else if value is Double {
+			return value as! Double
+		} else if value is Bool {
+			return value as! Bool
+		} else if value is NSDate {
+			return value as! NSDate
+		} else if value is NSData {
+			return value as! NSData
 		}
 		return "nAn"
 	}
 	
-	private func getSQL(data:[String:AnyObject], forInsert:Bool = true) -> (String, [AnyObject]?) {
+	private func getSQL(data:[String:Any], forInsert:Bool = true) -> (String, [Any]?) {
 		var sql = ""
-		var params:[AnyObject]? = nil
+		var params:[Any]? = nil
 		if forInsert {
 			// INSERT INTO tasks(task, categoryID) VALUES ('\(txtTask.text)', 1)
 			sql = "INSERT INTO \(table)("
@@ -258,7 +276,7 @@ class SQLTable:NSObject {
 		}
 		let pkey = primaryKey()
 		var wsql = ""
-		var rid:AnyObject?
+		var rid:Any?
 		var first = true
 		for (key, val) in data {
 			// Primary key handling

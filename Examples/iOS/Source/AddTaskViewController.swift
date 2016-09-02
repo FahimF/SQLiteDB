@@ -13,7 +13,7 @@ class AddTaskViewController: UITableViewController {
 
 	@IBAction func save() {
 		// Hide keyboard
-		if txtTask.isFirstResponder() {
+		if txtTask.isFirstResponder {
 			txtTask.resignFirstResponder()
 		}
 		// Validations

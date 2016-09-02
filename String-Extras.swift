@@ -36,12 +36,12 @@ extension String {
 	
 	func urlEncoded()->String {
 		let res:NSString = CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, self as NSString, nil,
-			"!*'();:@&=+$,/?%#[]", CFStringConvertNSStringEncodingToEncoding(String.Encoding.utf8.rawValue))
+			"!*'();:@&=+$,/?%#[]" as CFString!, CFStringConvertNSStringEncodingToEncoding(String.Encoding.utf8.rawValue))
 		return res as String
 	}
 	
 	func urlDecoded()->String {
-		let res:NSString = CFURLCreateStringByReplacingPercentEscapesUsingEncoding(kCFAllocatorDefault, self as NSString, "", CFStringConvertNSStringEncodingToEncoding(String.Encoding.utf8.rawValue))
+		let res:NSString = CFURLCreateStringByReplacingPercentEscapesUsingEncoding(kCFAllocatorDefault, self as NSString, "" as CFString!, CFStringConvertNSStringEncodingToEncoding(String.Encoding.utf8.rawValue))
 		return res as String
 	}
 	
