@@ -13,7 +13,7 @@ class AddCategoryViewController: UITableViewController {
 	
 	@IBAction func save() {
 		// Hide keyboard
-		if txtCat.isFirstResponder() {
+		if txtCat.isFirstResponder {
 			txtCat.resignFirstResponder()
 		}
 		// Validations

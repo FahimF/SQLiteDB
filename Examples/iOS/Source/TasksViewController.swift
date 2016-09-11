@@ -16,7 +16,7 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 		super.viewDidLoad()
 	}
 
-	override func viewWillAppear(animated: Bool) {
+	override func viewWillAppear(_ animated:Bool) {
 		super.viewWillAppear(animated)
 //		data = Task.rows(order:"task ASC") as! [Task]
 		data = Task.rows(order:"id ASC") as! [Task]
@@ -28,13 +28,13 @@ class TasksViewController: UIViewController, UITableViewDelegate, UITableViewDat
 	}
 
 	// UITableView Delegates
-	func tableView(tv:UITableView, numberOfRowsInSection section:Int) -> Int {
+	func tableView(_ tv:UITableView, numberOfRowsInSection section:Int) -> Int {
 		let cnt = data.count
 		return cnt
 	}
 	
-	func tableView(tv:UITableView, cellForRowAtIndexPath indexPath:NSIndexPath) -> UITableViewCell {
-		let cell = tv.dequeueReusableCellWithIdentifier("TaskCell")!
+	func tableView(_ tv:UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+		let cell = tv.dequeueReusableCell(withIdentifier: "TaskCell")!
 		let task = data[indexPath.row]
 		cell.textLabel?.text = task.task
 		return cell
