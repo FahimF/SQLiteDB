@@ -154,7 +154,7 @@ class SQLiteDB:NSObject {
 	}
 	
 	// Sets the 'user_version' value, a user-defined version number for the database. This is useful for managing migrations.
-	func setDBVersion(version:Int) {
+	func set(version:Int) {
 		_ = execute(sql:"PRAGMA user_version=\(version)")
 	}
 	
@@ -350,10 +350,9 @@ class SQLiteDB:NSObject {
 //		NSLog("SQLiteDB - Got column type: \(buf)")
 		if buf != nil {
 			var tmp = String(validatingUTF8:buf!)!.uppercased()
-			// Remove brackets
-			let pos = tmp.positionOf(sub:"(")
-			if pos > 0 {
-				tmp = tmp.subString(start:0, length:pos)
+			// Remove bracketed section
+			if let pos = tmp.range(of:"(") {
+				tmp = tmp.substring(to:pos.lowerBound)
 			}
 			// Remove unsigned?
 			// Remove spaces

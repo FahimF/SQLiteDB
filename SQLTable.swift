@@ -84,11 +84,11 @@ class SQLTable:NSObject {
 		
 	}
 	
-	class func rowByID(rid:Int) -> SQLTable? {
+	class func rowBy(id:Int) -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
 		let db = SQLiteDB.sharedInstance
-		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(rid)"
+		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(id)"
 		let arr = db.query(sql:sql)
 		if arr.count == 0 {
 			return nil
@@ -117,7 +117,7 @@ class SQLTable:NSObject {
 		return 0
 	}
 	
-	class func row(rowNumber:Int, filter:String="", order:String="") -> SQLTable? {
+	class func row(number:Int, filter:String="", order:String="") -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
 		let db = SQLiteDB.sharedInstance
@@ -129,7 +129,7 @@ class SQLTable:NSObject {
 			sql += " ORDER BY \(order)"
 		}
 		// Limit to specified row
-		sql += " LIMIT 1 OFFSET \(rowNumber-1)"
+		sql += " LIMIT 1 OFFSET \(number-1)"
 		let arr = db.query(sql:sql)
 		if arr.count == 0 {
 			return nil
