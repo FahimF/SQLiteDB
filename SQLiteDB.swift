@@ -23,7 +23,7 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to:sqlite3_destructor_type.self
 class SQLiteDB:NSObject {
 	let DB_NAME = "data.db"
 	let QUEUE_LABEL = "SQLiteDB"
-	static let sharedInstance = SQLiteDB()
+	static let shared = SQLiteDB()
 	private var db:OpaquePointer? = nil
 	private var queue:DispatchQueue!
 	private let fmt = DateFormatter()
@@ -59,7 +59,7 @@ class SQLiteDB:NSObject {
 			let from = (rp as NSString).appendingPathComponent(DB_NAME)
 			do {
 				try fm.copyItem(atPath:from, toPath:path)
-			} catch let error as NSError {
+			} catch let error {
 				NSLog("SQLiteDB - failed to copy writable version of DB!")
 				NSLog("Error - \(error.localizedDescription)")
 				return
@@ -105,9 +105,9 @@ class SQLiteDB:NSObject {
 	}
 	
 	// Execute SQL with parameters and return result code
-	func execute(sql:String, parameters:[Any]?=nil)->CInt {
-		var result:CInt = 0
-		queue.sync() {
+	func execute(sql:String, parameters:[Any]?=nil)->Int {
+		var result = 0
+		queue.sync {
 			if let stmt = self.prepare(sql:sql, params:parameters) {
 				result = self.execute(stmt:stmt, sql:sql)
 			}
@@ -118,7 +118,7 @@ class SQLiteDB:NSObject {
 	// Run SQL query with parameters
 	func query(sql:String, parameters:[Any]?=nil)->[[String:Any]] {
 		var rows = [[String:Any]]()
-		queue.sync() {
+		queue.sync {
 			if let stmt = self.prepare(sql:sql, params:parameters) {
 				rows = self.query(stmt:stmt, sql:sql)
 			}
@@ -163,8 +163,8 @@ class SQLiteDB:NSObject {
 		// Set up essentials
 		queue = DispatchQueue(label:QUEUE_LABEL, attributes:[])
 		// You need to set the locale in order for the 24-hour date format to work correctly on devices where 24-hour format is turned off
-		fmt.locale = NSLocale(localeIdentifier:"en_US_POSIX") as Locale!
-		fmt.timeZone = NSTimeZone(forSecondsFromGMT:0) as TimeZone!
+		fmt.locale = Locale(identifier:"en_US_POSIX")
+		fmt.timeZone = TimeZone(secondsFromGMT:0)
 		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
 		// Open the DB
 		let cpath = path.cString(using: String.Encoding.utf8)
@@ -200,7 +200,7 @@ class SQLiteDB:NSObject {
 			// Clean DB
 			NSLog("SQLiteDB - Optimize DB")
 			let sql = "VACUUM; ANALYZE"
-			if execute(sql:sql) != SQLITE_OK {
+			if CInt(execute(sql:sql)) != SQLITE_OK {
 				NSLog("SQLiteDB - Error cleaning DB")
 			}
 			sqlite3_close(db)
@@ -240,8 +240,8 @@ class SQLiteDB:NSObject {
 					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, SQLITE_TRANSIENT)
 				} else if let data = params![ndx-1] as? NSData {
 					flag = sqlite3_bind_blob(stmt, CInt(ndx), data.bytes, CInt(data.length), SQLITE_TRANSIENT)
-				} else if let date = params![ndx-1] as? NSDate {
-					let txt = fmt.string(from: date as Date)
+				} else if let date = params![ndx-1] as? Date {
+					let txt = fmt.string(from:date)
 					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, SQLITE_TRANSIENT)
 				} else if let val = params![ndx-1] as? Double {
 					flag = sqlite3_bind_double(stmt, CInt(ndx), CDouble(val))
@@ -265,10 +265,10 @@ class SQLiteDB:NSObject {
 	}
 	
 	// Private method which handles the actual execution of an SQL statement
-	private func execute(stmt:OpaquePointer, sql:String)->CInt {
+	private func execute(stmt:OpaquePointer, sql:String)->Int {
 		// Step
-		var result = sqlite3_step(stmt)
-		if result != SQLITE_OK && result != SQLITE_DONE {
+		let res = sqlite3_step(stmt)
+		if res != SQLITE_OK && res != SQLITE_DONE {
 			sqlite3_finalize(stmt)
 			if let error = String(validatingUTF8:sqlite3_errmsg(self.db)) {
 				let msg = "SQLiteDB - failed to execute SQL: \(sql), Error: \(error)"
@@ -278,16 +278,17 @@ class SQLiteDB:NSObject {
 		}
 		// Is this an insert
 		let upp = sql.uppercased()
+		var result = 0
 		if upp.hasPrefix("INSERT ") {
 			// Known limitations: http://www.sqlite.org/c3ref/last_insert_rowid.html
 			let rid = sqlite3_last_insert_rowid(self.db)
-			result = CInt(rid)
+			result = Int(rid)
 		} else if upp.hasPrefix("DELETE") || upp.hasPrefix("UPDATE") {
 			var cnt = sqlite3_changes(self.db)
 			if cnt == 0 {
 				cnt += 1
 			}
-			result = CInt(cnt)
+			result = Int(cnt)
 		} else {
 			result = 1
 		}
@@ -420,16 +421,16 @@ class SQLiteDB:NSObject {
 					var time:tm = tm(tm_sec: 0, tm_min: 0, tm_hour: 0, tm_mday: 0, tm_mon: 0, tm_year: 0, tm_wday: 0, tm_yday: 0, tm_isdst: 0, tm_gmtoff: 0, tm_zone:nil)
 					strptime(txt, "%Y-%m-%d %H:%M:%S", &time)
 					time.tm_isdst = -1
-					let diff = NSTimeZone.local.secondsFromGMT()
+					let diff = TimeZone.current.secondsFromGMT()
 					let t = mktime(&time) + diff
 					let ti = TimeInterval(t)
-					let val = NSDate(timeIntervalSince1970:ti)
+					let val = Date(timeIntervalSince1970:ti)
 					return val
 				}
 			}
 			// If not a text date, then it's a time interval
 			let val = sqlite3_column_double(stmt, index)
-			let dt = NSDate(timeIntervalSince1970: val)
+			let dt = Date(timeIntervalSince1970: val)
 			return dt
 		}
 		// If nothing works, return a string representation

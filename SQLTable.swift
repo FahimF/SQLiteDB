@@ -68,7 +68,7 @@ class SQLTable:NSObject {
 		var res = [SQLTable]()
 		let tmp = self.init()
 		let data = tmp.values()
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		let fsql = sql.isEmpty ? "SELECT * FROM \(table)" : sql
 		let arr = db.query(sql:fsql)
 		for row in arr {
@@ -84,11 +84,15 @@ class SQLTable:NSObject {
 		
 	}
 	
-	class func rowBy(id:Int) -> SQLTable? {
+	class func rowBy(id:Any) -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
-		let db = SQLiteDB.sharedInstance
-		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(id)"
+		let db = SQLiteDB.shared
+		var val = "\(id)"
+		if id is String {
+			val = "'\(id)'"
+		}
+		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(val)"
 		let arr = db.query(sql:sql)
 		if arr.count == 0 {
 			return nil
@@ -102,7 +106,7 @@ class SQLTable:NSObject {
 	}
 	
 	class func count(filter:String="") -> Int {
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		var sql = "SELECT COUNT(*) AS count FROM \(table)"
 		if !filter.isEmpty {
 			sql += " WHERE \(filter)"
@@ -120,7 +124,7 @@ class SQLTable:NSObject {
 	class func row(number:Int, filter:String="", order:String="") -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		var sql = "SELECT * FROM \(table)"
 		if !filter.isEmpty {
 			sql += " WHERE \(filter)"
@@ -143,7 +147,7 @@ class SQLTable:NSObject {
 	}
 	
 	class func remove(filter:String = "") -> Bool {
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		let sql:String
 		if filter.isEmpty {
 			// Delete all records
@@ -157,19 +161,23 @@ class SQLTable:NSObject {
 	}
 	
 	class func zap() {
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		let sql = "DELETE FROM \(table)"
 		_ = db.execute(sql:sql)
 	}
 	
 	// MARK:- Public Methods
 	func save() -> Int {
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		let key = primaryKey()
 		let data = values()
 		var insert = true
 		if let rid = data[key] {
-			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(rid)"
+			var val = "\(rid)"
+			if rid is String {
+				val = "'\(rid)'"
+			}
+			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(val)"
 			let arr = db.query(sql:sql)
 			if arr.count == 1 {
 				if let cnt = arr[0]["count"] as? Int {
@@ -180,20 +188,24 @@ class SQLTable:NSObject {
 		// Insert or update
 		let (sql, params) = getSQL(data:data, forInsert:insert)
 		let rc = db.execute(sql:sql, parameters:params)
-		// Update primary key
-		let rid = Int(rc)
-		if insert {
-			setValue(rid, forKey:key)
-		}
-		let res = (rc != 0)
-		if !res {
+		if rc == 0 {
 			NSLog("Error saving record!")
+			return 0
 		}
-		return rid
+		// Update primary key
+		let pid = data[key]
+		if insert {
+			if pid is Int64 {
+				setValue(rc, forKey:key)
+			} else if pid is Int {
+				setValue(Int(rc), forKey:key)
+			}
+		}
+		return rc
 	}
 	
 	func delete() -> Bool {
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		let key = primaryKey()
 		let data = values()
 		if let rid = data[key] {
@@ -205,7 +217,7 @@ class SQLTable:NSObject {
 	}
 	
 	func refresh() {
-		let db = SQLiteDB.sharedInstance
+		let db = SQLiteDB.shared
 		let key = primaryKey()
 		let data = values()
 		if let rid = data[key] {
@@ -256,8 +268,8 @@ class SQLTable:NSObject {
 			return value as! Double
 		} else if value is Bool {
 			return value as! Bool
-		} else if value is NSDate {
-			return value as! NSDate
+		} else if value is Date {
+			return value as! Date
 		} else if value is NSData {
 			return value as! NSData
 		}
