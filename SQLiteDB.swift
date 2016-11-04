@@ -243,6 +243,9 @@ class SQLiteDB:NSObject {
 				} else if let date = params![ndx-1] as? Date {
 					let txt = fmt.string(from:date)
 					flag = sqlite3_bind_text(stmt, CInt(ndx), txt, -1, SQLITE_TRANSIENT)
+				} else if let val = params![ndx-1] as? Bool {
+					let num = val ? 1 : 0
+					flag = sqlite3_bind_int(stmt, CInt(ndx), CInt(num))
 				} else if let val = params![ndx-1] as? Double {
 					flag = sqlite3_bind_double(stmt, CInt(ndx), CDouble(val))
 				} else if let val = params![ndx-1] as? Int {
