@@ -15,9 +15,9 @@ import AppKit
 extension String {
 	func positionOf(sub:String)->Int {
 		var pos = -1
-		if let range = self.rangeOfString(sub) {
+		if let range = range(of:sub) {
 			if !range.isEmpty {
-				pos = self.startIndex.distanceTo(range.startIndex)
+				pos = characters.distance(from:startIndex, to:range.lowerBound)
 			}
 		}
 		return pos
@@ -28,20 +28,20 @@ extension String {
 		if len == -1 {
 			len = characters.count - start
 		}
-		let st = startIndex.advancedBy(start)
-		let en = st.advancedBy(len)
+		let st = characters.index(startIndex, offsetBy:start)
+		let en = characters.index(st, offsetBy:len)
 		let range = st ..< en
-		return substringWithRange(range)
+		return substring(with:range)
 	}
 	
 	func urlEncoded()->String {
 		let res:NSString = CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, self as NSString, nil,
-			"!*'();:@&=+$,/?%#[]", CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding))
+			"!*'();:@&=+$,/?%#[]" as CFString!, CFStringConvertNSStringEncodingToEncoding(String.Encoding.utf8.rawValue))
 		return res as String
 	}
 	
 	func urlDecoded()->String {
-		let res:NSString = CFURLCreateStringByReplacingPercentEscapesUsingEncoding(kCFAllocatorDefault, self as NSString, "", CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding))
+		let res:NSString = CFURLCreateStringByReplacingPercentEscapesUsingEncoding(kCFAllocatorDefault, self as NSString, "" as CFString!, CFStringConvertNSStringEncodingToEncoding(String.Encoding.utf8.rawValue))
 		return res as String
 	}
 	
