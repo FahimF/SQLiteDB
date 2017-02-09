@@ -29,34 +29,34 @@ Usage
 ---
 * You can gain access to the shared database instance as follows:
 ```swift
-	let db = SQLiteDB.sharedInstance
+	let db = SQLiteDB.shared
 ```
 
 * You can make SQL queries using the `query` method (the results are returned as an array of dictionaries where the key is a `String` and the value is of type `AnyObject`):
 ```swift
-	let data = db.query("SELECT * FROM customers WHERE name='John'")
+	let data = db.query(sql:"SELECT * FROM customers WHERE name='John'")
 	let row = data[0]
 	if let name = row["name"] {
 		textLabel.text = name as! String
 	}
 ```
-In the above, `db` is a reference to the shared SQLite database instance. You can access a column from your query results by subscripting a row of the returned results (the rows are dictionaries) based on the column name. That returns an `AnyObject` value which you can cast to the relevant data type.
+In the above, `db` is a reference to the shared SQLite database instance. You can access a column from your query results by subscripting a row of the returned results (the rows are dictionaries) based on the column name. That returns an optional `Any` value which you can cast to the relevant data type.
 
 * If you'd prefer to bind values to your query instead of creating the full SQL statement, then you can execute the above SQL also like this:
 ```swift
 	let name = "John"
-	let data = db.query("SELECT * FROM customers WHERE name=?", parameters:[name])
+	let data = db.query(sql:"SELECT * FROM customers WHERE name=?", parameters:[name])
 ```
 
 * Of course, you can also construct the above SQL query by using Swift's string manipulation functionality as well (without using the SQLite bind functionality):
 ```swift
 	let name = "John"
-	let data = db.query("SELECT * FROM customers WHERE name='\(name)'", parameters:[name])
+	let data = db.query(sql:"SELECT * FROM customers WHERE name='\(name)'")
 ```
 
 * You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 ```swift
-	let result = db.execute("DELETE FROM customers WHERE last_name='Smith'")
+	let result = db.execute(sql:"DELETE FROM customers WHERE last_name='Smith'")
 	// If the result is 0 then the operation failed, for inserts the result gives the newly inserted record ID
 ```
 
