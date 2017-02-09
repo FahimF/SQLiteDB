@@ -18,7 +18,6 @@
 		DD18184A19D56B5B0053E68E /* CategoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184019D56B5B0053E68E /* CategoryViewController.swift */; };
 		DD18184B19D56B5B0053E68E /* TasksViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184119D56B5B0053E68E /* TasksViewController.swift */; };
 		DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184C19D56BAF0053E68E /* SQLiteDB.swift */; };
-		DD18184F19D56BAF0053E68E /* String-Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184D19D56BAF0053E68E /* String-Extras.swift */; };
 		DD18185119D56CDB0053E68E /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DD18185019D56CDB0053E68E /* libsqlite3.dylib */; };
 		DD7FFDBA1D23626C003EB06B /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB81D23626C003EB06B /* Category.swift */; };
 		DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB91D23626C003EB06B /* Task.swift */; };
@@ -38,7 +37,6 @@
 		DD18184019D56B5B0053E68E /* CategoryViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CategoryViewController.swift; sourceTree = "<group>"; };
 		DD18184119D56B5B0053E68E /* TasksViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TasksViewController.swift; sourceTree = "<group>"; };
 		DD18184C19D56BAF0053E68E /* SQLiteDB.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLiteDB.swift; path = ../../SQLiteDB.swift; sourceTree = "<group>"; };
-		DD18184D19D56BAF0053E68E /* String-Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "String-Extras.swift"; path = "../../String-Extras.swift"; sourceTree = "<group>"; };
 		DD18185019D56CDB0053E68E /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
 		DD228C9319486E0400B74370 /* SQLiteDB-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SQLiteDB-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD7FFDB81D23626C003EB06B /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
@@ -122,7 +120,6 @@
 			isa = PBXGroup;
 			children = (
 				DD18184C19D56BAF0053E68E /* SQLiteDB.swift */,
-				DD18184D19D56BAF0053E68E /* String-Extras.swift */,
 				DD04B4781BEC367E008E1261 /* SQLTable.swift */,
 			);
 			name = "SQLiteDB-Swift";
@@ -167,7 +164,7 @@
 			attributes = {
 				LastSwiftMigration = 0710;
 				LastSwiftUpdateCheck = 0710;
-				LastUpgradeCheck = 0800;
+				LastUpgradeCheck = 0820;
 				ORGANIZATIONNAME = "RookSoft Pte. Ltd.";
 				TargetAttributes = {
 					DD228C9219486E0400B74370 = {
@@ -227,7 +224,6 @@
 				DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */,
 				DD7FFDBA1D23626C003EB06B /* Category.swift in Sources */,
 				DD18184A19D56B5B0053E68E /* CategoryViewController.swift in Sources */,
-				DD18184F19D56BAF0053E68E /* String-Extras.swift in Sources */,
 				DD18184819D56B5B0053E68E /* AddTaskViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -267,8 +263,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -312,8 +310,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";

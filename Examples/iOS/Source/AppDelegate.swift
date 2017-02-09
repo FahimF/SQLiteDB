@@ -12,9 +12,9 @@ import UIKit
 class AppDelegate: UIResponder, UIApplicationDelegate {
                             
 	var window: UIWindow?
-	let db = SQLiteDB.sharedInstance
-	
-	func application(_ application:UIApplication, didFinishLaunchingWithOptions launchOptions:[NSObject:AnyObject]?) -> Bool {
+	let db = SQLiteDB.shared
+
+	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
 		return true
 	}
 

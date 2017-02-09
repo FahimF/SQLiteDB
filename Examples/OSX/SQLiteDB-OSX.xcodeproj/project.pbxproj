@@ -13,7 +13,6 @@
 		DD76985D19F62DA200F7C8A5 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD76985819F62DA200F7C8A5 /* ViewController.swift */; };
 		DD76985F19F62E4000F7C8A5 /* data.db in Resources */ = {isa = PBXBuildFile; fileRef = DD76985E19F62E4000F7C8A5 /* data.db */; };
 		DD76986419F62E9500F7C8A5 /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD76986219F62E9500F7C8A5 /* SQLiteDB.swift */; };
-		DD76986519F62E9500F7C8A5 /* String-Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD76986319F62E9500F7C8A5 /* String-Extras.swift */; };
 		DD7FFDAF1D2360B5003EB06B /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD7FFDAE1D2360B5003EB06B /* libsqlite3.tbd */; };
 		DD7FFDB31D2361A3003EB06B /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB11D2361A3003EB06B /* Category.swift */; };
 		DD7FFDB41D2361A3003EB06B /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB21D2361A3003EB06B /* Task.swift */; };
@@ -29,7 +28,6 @@
 		DD76985819F62DA200F7C8A5 /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		DD76985E19F62E4000F7C8A5 /* data.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = data.db; sourceTree = "<group>"; };
 		DD76986219F62E9500F7C8A5 /* SQLiteDB.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLiteDB.swift; path = ../../SQLiteDB.swift; sourceTree = "<group>"; };
-		DD76986319F62E9500F7C8A5 /* String-Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "String-Extras.swift"; path = "../../String-Extras.swift"; sourceTree = "<group>"; };
 		DD76986819F62F3E00F7C8A5 /* Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
 		DD7FFDAE1D2360B5003EB06B /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		DD7FFDB11D2361A3003EB06B /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
@@ -103,7 +101,6 @@
 			children = (
 				DD7FFDB51D236201003EB06B /* SQLTable.swift */,
 				DD76986219F62E9500F7C8A5 /* SQLiteDB.swift */,
-				DD76986319F62E9500F7C8A5 /* String-Extras.swift */,
 			);
 			name = SQLiteDB;
 			sourceTree = "<group>";
@@ -146,7 +143,7 @@
 			attributes = {
 				LastSwiftMigration = 0710;
 				LastSwiftUpdateCheck = 0710;
-				LastUpgradeCheck = 0800;
+				LastUpgradeCheck = 0820;
 				ORGANIZATIONNAME = "RookSoft Ltd.";
 				TargetAttributes = {
 					DD76982E19F62D3000F7C8A5 = {
@@ -193,7 +190,6 @@
 				DD76986419F62E9500F7C8A5 /* SQLiteDB.swift in Sources */,
 				DD7FFDB61D236201003EB06B /* SQLTable.swift in Sources */,
 				DD7FFDB31D2361A3003EB06B /* Category.swift in Sources */,
-				DD76986519F62E9500F7C8A5 /* String-Extras.swift in Sources */,
 				DD76985D19F62DA200F7C8A5 /* ViewController.swift in Sources */,
 				DD7FFDB41D2361A3003EB06B /* Task.swift in Sources */,
 				DD76985C19F62DA200F7C8A5 /* AppDelegate.swift in Sources */,
@@ -227,8 +223,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
@@ -272,8 +270,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";

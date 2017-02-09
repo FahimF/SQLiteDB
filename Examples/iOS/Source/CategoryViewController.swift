@@ -11,7 +11,7 @@ import UIKit
 class CategoryViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 	@IBOutlet var table:UITableView!
 	var data = [Category]()
-	let db = SQLiteDB.sharedInstance
+	let db = SQLiteDB.shared
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
