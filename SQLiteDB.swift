@@ -105,7 +105,7 @@ class SQLiteDB:NSObject {
 	}
 	
 	// Execute SQL with parameters and return result code
-	func execute(sql:String, parameters:[Any]?=nil)->Int {
+	func execute(sql:String, parameters:[Any?]?=nil)->Int {
 		var result = 0
 		queue.sync {
 			if let stmt = self.prepare(sql:sql, params:parameters) {
@@ -116,7 +116,7 @@ class SQLiteDB:NSObject {
 	}
 	
 	// Run SQL query with parameters
-	func query(sql:String, parameters:[Any]?=nil)->[[String:Any]] {
+	func query(sql:String, parameters:[Any?]?=nil)->[[String:Any]] {
 		var rows = [[String:Any]]()
 		queue.sync {
 			if let stmt = self.prepare(sql:sql, params:parameters) {
