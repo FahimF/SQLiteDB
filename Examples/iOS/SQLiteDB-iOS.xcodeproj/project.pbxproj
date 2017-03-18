@@ -19,9 +19,22 @@
 		DD18184B19D56B5B0053E68E /* TasksViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184119D56B5B0053E68E /* TasksViewController.swift */; };
 		DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184C19D56BAF0053E68E /* SQLiteDB.swift */; };
 		DD18185119D56CDB0053E68E /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DD18185019D56CDB0053E68E /* libsqlite3.dylib */; };
+		DD196CD71E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD196CD61E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift */; };
+		DD196CEC1E7B9EE200E19688 /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184C19D56BAF0053E68E /* SQLiteDB.swift */; };
+		DD196CEE1E7BA00E00E19688 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD196CED1E7BA00E00E19688 /* libsqlite3.tbd */; };
 		DD7FFDBA1D23626C003EB06B /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB81D23626C003EB06B /* Category.swift */; };
 		DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB91D23626C003EB06B /* Task.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DD196CD91E7B9D1F00E19688 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DD228C8B19486E0400B74370 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD228C9219486E0400B74370;
+			remoteInfo = "SQLiteDB-iOS";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		DD04B4781BEC367E008E1261 /* SQLTable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLTable.swift; path = ../../SQLTable.swift; sourceTree = "<group>"; };
@@ -38,12 +51,24 @@
 		DD18184119D56B5B0053E68E /* TasksViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TasksViewController.swift; sourceTree = "<group>"; };
 		DD18184C19D56BAF0053E68E /* SQLiteDB.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLiteDB.swift; path = ../../SQLiteDB.swift; sourceTree = "<group>"; };
 		DD18185019D56CDB0053E68E /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		DD196CD41E7B9D1E00E19688 /* SQLiteDB-iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SQLiteDB-iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD196CD61E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDB_iOSTests.swift; sourceTree = "<group>"; };
+		DD196CD81E7B9D1F00E19688 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DD196CED1E7BA00E00E19688 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		DD228C9319486E0400B74370 /* SQLiteDB-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SQLiteDB-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD7FFDB81D23626C003EB06B /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
 		DD7FFDB91D23626C003EB06B /* Task.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		DD196CD11E7B9D1E00E19688 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD196CEE1E7BA00E00E19688 /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD228C9019486E0400B74370 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -91,9 +116,19 @@
 		DD18185219D56DBB0053E68E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DD196CED1E7BA00E00E19688 /* libsqlite3.tbd */,
 				DD18185019D56CDB0053E68E /* libsqlite3.dylib */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DD196CD51E7B9D1F00E19688 /* SQLiteDB-iOSTests */ = {
+			isa = PBXGroup;
+			children = (
+				DD196CD61E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift */,
+				DD196CD81E7B9D1F00E19688 /* Info.plist */,
+			);
+			path = "SQLiteDB-iOSTests";
 			sourceTree = "<group>";
 		};
 		DD228C8A19486E0400B74370 = {
@@ -103,6 +138,7 @@
 				DD7FFDB71D23626C003EB06B /* Shared */,
 				DD18183419D56B5B0053E68E /* Resources */,
 				DD04E1CF195C195B00494935 /* Third-party */,
+				DD196CD51E7B9D1F00E19688 /* SQLiteDB-iOSTests */,
 				DD18185219D56DBB0053E68E /* Frameworks */,
 				DD228C9419486E0400B74370 /* Products */,
 			);
@@ -112,6 +148,7 @@
 			isa = PBXGroup;
 			children = (
 				DD228C9319486E0400B74370 /* SQLiteDB-iOS.app */,
+				DD196CD41E7B9D1E00E19688 /* SQLiteDB-iOSTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -139,6 +176,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		DD196CD31E7B9D1E00E19688 /* SQLiteDB-iOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD196CDD1E7B9D1F00E19688 /* Build configuration list for PBXNativeTarget "SQLiteDB-iOSTests" */;
+			buildPhases = (
+				DD196CD01E7B9D1E00E19688 /* Sources */,
+				DD196CD11E7B9D1E00E19688 /* Frameworks */,
+				DD196CD21E7B9D1E00E19688 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DD196CDA1E7B9D1F00E19688 /* PBXTargetDependency */,
+			);
+			name = "SQLiteDB-iOSTests";
+			productName = "SQLiteDB-iOSTests";
+			productReference = DD196CD41E7B9D1E00E19688 /* SQLiteDB-iOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		DD228C9219486E0400B74370 /* SQLiteDB-iOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DD228CB119486E0500B74370 /* Build configuration list for PBXNativeTarget "SQLiteDB-iOS" */;
@@ -163,10 +218,16 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftMigration = 0710;
-				LastSwiftUpdateCheck = 0710;
+				LastSwiftUpdateCheck = 0820;
 				LastUpgradeCheck = 0820;
 				ORGANIZATIONNAME = "RookSoft Pte. Ltd.";
 				TargetAttributes = {
+					DD196CD31E7B9D1E00E19688 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = FA2KHM6C4N;
+						ProvisioningStyle = Automatic;
+						TestTargetID = DD228C9219486E0400B74370;
+					};
 					DD228C9219486E0400B74370 = {
 						CreatedOnToolsVersion = 6.0;
 						DevelopmentTeam = FA2KHM6C4N;
@@ -193,11 +254,19 @@
 			projectRoot = "";
 			targets = (
 				DD228C9219486E0400B74370 /* SQLiteDB-iOS */,
+				DD196CD31E7B9D1E00E19688 /* SQLiteDB-iOSTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		DD196CD21E7B9D1E00E19688 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD228C9119486E0400B74370 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -212,6 +281,15 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		DD196CD01E7B9D1E00E19688 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD196CD71E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift in Sources */,
+				DD196CEC1E7B9EE200E19688 /* SQLiteDB.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD228C8F19486E0400B74370 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -229,6 +307,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DD196CDA1E7B9D1F00E19688 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD228C9219486E0400B74370 /* SQLiteDB-iOS */;
+			targetProxy = DD196CD91E7B9D1F00E19688 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		DD04B47F1BEC511B008E1261 /* Launch Screen.storyboard */ = {
@@ -250,6 +336,49 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		DD196CDB1E7B9D1F00E19688 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = FA2KHM6C4N;
+				INFOPLIST_FILE = "SQLiteDB-iOSTests/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MTL_ENABLE_DEBUG_INFO = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.farook.SQLiteDB-iOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-iOS.app/SQLiteDB-iOS";
+			};
+			name = Debug;
+		};
+		DD196CDC1E7B9D1F00E19688 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = FA2KHM6C4N;
+				INFOPLIST_FILE = "SQLiteDB-iOSTests/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.farook.SQLiteDB-iOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-iOS.app/SQLiteDB-iOS";
+			};
+			name = Release;
+		};
 		DD228CAF19486E0500B74370 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -374,6 +503,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		DD196CDD1E7B9D1F00E19688 /* Build configuration list for PBXNativeTarget "SQLiteDB-iOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD196CDB1E7B9D1F00E19688 /* Debug */,
+				DD196CDC1E7B9D1F00E19688 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		DD228C8E19486E0400B74370 /* Build configuration list for PBXProject "SQLiteDB-iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

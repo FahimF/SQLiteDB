@@ -33,7 +33,6 @@ class SQLiteDB:NSObject {
 		super.init()
 		// Set up for file operations
 		let fm = FileManager.default
-//		let dbName = String(cString:DB_NAME)
 		// Get path to DB in Documents directory
 		var docDir = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)[0]
 		// If macOS, add app name to path since otherwise, DB could possibly interfere with another app using SQLiteDB
@@ -46,12 +45,12 @@ class SQLiteDB:NSObject {
 			do {
 				try fm.createDirectory(atPath:docDir, withIntermediateDirectories:true, attributes:nil)
 			} catch {
-				NSLog("Error creating DB directory: \(docDir) on macOS")
+				assert(false, "SQLiteDB: Error creating DB directory: \(docDir) on macOS")
+				return
 			}
 		}
 #endif
 		let path = (docDir as NSString).appendingPathComponent(DB_NAME)
-//		NSLog("Database path: \(path)")
 		// Check if copy of DB is there in Documents directory
 		if !(fm.fileExists(atPath:path)) {
 			// The database does not exist, so copy to Documents directory
@@ -60,8 +59,7 @@ class SQLiteDB:NSObject {
 			do {
 				try fm.copyItem(atPath:from, toPath:path)
 			} catch let error {
-				NSLog("SQLiteDB - failed to copy writable version of DB!")
-				NSLog("Error - \(error.localizedDescription)")
+				assert(false, "SQLiteDB: Failed to copy writable version of DB! Error - \(error.localizedDescription)")
 				return
 			}
 		}
@@ -81,27 +79,9 @@ class SQLiteDB:NSObject {
 		return "SQLiteDB: \(path)"
 	}
 	
-	// MARK:- Class Methods
-	class func openRO(path:String) -> SQLiteDB {
-		let db = SQLiteDB(path:path)
-		return db
-	}
-	
 	// MARK:- Public Methods
 	func dbDate(dt:Date) -> String {
 		return fmt.string(from:dt)
-	}
-	
-	func dbDateFromString(str:String, format:String="") -> Date? {
-		let dtFormat = fmt.dateFormat
-		if !format.isEmpty {
-			fmt.dateFormat = format
-		}
-		let dt = fmt.date(from:str)
-		if !format.isEmpty {
-			fmt.dateFormat = dtFormat
-		}
-		return dt
 	}
 	
 	// Execute SQL with parameters and return result code

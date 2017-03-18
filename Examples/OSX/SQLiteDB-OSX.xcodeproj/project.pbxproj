@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DD196CE51E7B9DBA00E19688 /* SQLiteDB_OSXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD196CE41E7B9DBA00E19688 /* SQLiteDB_OSXTests.swift */; };
+		DD2B14891E7D3EDC00EBF2F8 /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD76986219F62E9500F7C8A5 /* SQLiteDB.swift */; };
+		DD2B148A1E7D3F3D00EBF2F8 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD7FFDAE1D2360B5003EB06B /* libsqlite3.tbd */; };
 		DD76985919F62DA200F7C8A5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD76985219F62DA100F7C8A5 /* Main.storyboard */; };
 		DD76985A19F62DA200F7C8A5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD76985419F62DA100F7C8A5 /* Images.xcassets */; };
 		DD76985C19F62DA200F7C8A5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD76985719F62DA200F7C8A5 /* AppDelegate.swift */; };
@@ -19,7 +22,20 @@
 		DD7FFDB61D236201003EB06B /* SQLTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB51D236201003EB06B /* SQLTable.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		DD196CE71E7B9DBA00E19688 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DD76982719F62D3000F7C8A5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD76982E19F62D3000F7C8A5;
+			remoteInfo = "SQLiteDB-OSX";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		DD196CE21E7B9DBA00E19688 /* SQLiteDB-OSXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SQLiteDB-OSXTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD196CE41E7B9DBA00E19688 /* SQLiteDB_OSXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDB_OSXTests.swift; sourceTree = "<group>"; };
+		DD196CE61E7B9DBA00E19688 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DD76982F19F62D3000F7C8A5 /* SQLiteDB-OSX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SQLiteDB-OSX.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD76985319F62DA100F7C8A5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		DD76985419F62DA100F7C8A5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -36,6 +52,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		DD196CDF1E7B9DBA00E19688 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD2B148A1E7D3F3D00EBF2F8 /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD76982C19F62D3000F7C8A5 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -47,6 +71,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DD196CE31E7B9DBA00E19688 /* SQLiteDB-OSXTests */ = {
+			isa = PBXGroup;
+			children = (
+				DD196CE41E7B9DBA00E19688 /* SQLiteDB_OSXTests.swift */,
+				DD196CE61E7B9DBA00E19688 /* Info.plist */,
+			);
+			path = "SQLiteDB-OSXTests";
+			sourceTree = "<group>";
+		};
 		DD76982619F62D3000F7C8A5 = {
 			isa = PBXGroup;
 			children = (
@@ -55,6 +88,7 @@
 				DD76985619F62DA100F7C8A5 /* Source */,
 				DD76985119F62DA100F7C8A5 /* Resources */,
 				DD76986019F62E5F00F7C8A5 /* Third-party */,
+				DD196CE31E7B9DBA00E19688 /* SQLiteDB-OSXTests */,
 				DD76983019F62D3000F7C8A5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -63,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				DD76982F19F62D3000F7C8A5 /* SQLiteDB-OSX.app */,
+				DD196CE21E7B9DBA00E19688 /* SQLiteDB-OSXTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,6 +153,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		DD196CE11E7B9DBA00E19688 /* SQLiteDB-OSXTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD196CEB1E7B9DBA00E19688 /* Build configuration list for PBXNativeTarget "SQLiteDB-OSXTests" */;
+			buildPhases = (
+				DD196CDE1E7B9DBA00E19688 /* Sources */,
+				DD196CDF1E7B9DBA00E19688 /* Frameworks */,
+				DD196CE01E7B9DBA00E19688 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DD196CE81E7B9DBA00E19688 /* PBXTargetDependency */,
+			);
+			name = "SQLiteDB-OSXTests";
+			productName = "SQLiteDB-OSXTests";
+			productReference = DD196CE21E7B9DBA00E19688 /* SQLiteDB-OSXTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		DD76982E19F62D3000F7C8A5 /* SQLiteDB-OSX */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DD76984B19F62D3000F7C8A5 /* Build configuration list for PBXNativeTarget "SQLiteDB-OSX" */;
@@ -142,10 +195,16 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftMigration = 0710;
-				LastSwiftUpdateCheck = 0710;
+				LastSwiftUpdateCheck = 0820;
 				LastUpgradeCheck = 0820;
 				ORGANIZATIONNAME = "RookSoft Ltd.";
 				TargetAttributes = {
+					DD196CE11E7B9DBA00E19688 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = FA2KHM6C4N;
+						ProvisioningStyle = Automatic;
+						TestTargetID = DD76982E19F62D3000F7C8A5;
+					};
 					DD76982E19F62D3000F7C8A5 = {
 						CreatedOnToolsVersion = 6.1;
 					};
@@ -165,11 +224,19 @@
 			projectRoot = "";
 			targets = (
 				DD76982E19F62D3000F7C8A5 /* SQLiteDB-OSX */,
+				DD196CE11E7B9DBA00E19688 /* SQLiteDB-OSXTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		DD196CE01E7B9DBA00E19688 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD76982D19F62D3000F7C8A5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -183,6 +250,15 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		DD196CDE1E7B9DBA00E19688 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD196CE51E7B9DBA00E19688 /* SQLiteDB_OSXTests.swift in Sources */,
+				DD2B14891E7D3EDC00EBF2F8 /* SQLiteDB.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD76982B19F62D3000F7C8A5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -198,6 +274,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		DD196CE81E7B9DBA00E19688 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD76982E19F62D3000F7C8A5 /* SQLiteDB-OSX */;
+			targetProxy = DD196CE71E7B9DBA00E19688 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		DD76985219F62DA100F7C8A5 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
@@ -210,6 +294,48 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		DD196CE91E7B9DBA00E19688 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = FA2KHM6C4N;
+				INFOPLIST_FILE = "SQLiteDB-OSXTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.farook.SQLiteDB-OSXTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-OSX.app/Contents/MacOS/SQLiteDB-OSX";
+			};
+			name = Debug;
+		};
+		DD196CEA1E7B9DBA00E19688 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = FA2KHM6C4N;
+				INFOPLIST_FILE = "SQLiteDB-OSXTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.farook.SQLiteDB-OSXTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-OSX.app/Contents/MacOS/SQLiteDB-OSX";
+			};
+			name = Release;
+		};
 		DD76984919F62D3000F7C8A5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -326,6 +452,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		DD196CEB1E7B9DBA00E19688 /* Build configuration list for PBXNativeTarget "SQLiteDB-OSXTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD196CE91E7B9DBA00E19688 /* Debug */,
+				DD196CEA1E7B9DBA00E19688 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		DD76982A19F62D3000F7C8A5 /* Build configuration list for PBXProject "SQLiteDB-OSX" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
