@@ -106,23 +106,6 @@ class SQLiteDB:NSObject {
 		return rows
 	}
 	
-	// Show alert with either supplied message or last error
-	func alert(msg:String) {
-		DispatchQueue.main.async {
-#if os(iOS)
-			let alert = UIAlertView(title: "SQLiteDB", message:msg, delegate: nil, cancelButtonTitle: "OK")
-			alert.show()
-#else
-			let alert = NSAlert()
-			alert.addButton(withTitle:"OK")
-			alert.messageText = "SQLiteDB"
-			alert.informativeText = msg
-			alert.alertStyle = NSAlertStyle.warning
-			alert.runModal()
-#endif
-		}
-	}
-	
 	// Versioning
 	func getDBVersion() -> Int {
 		var version = 0
