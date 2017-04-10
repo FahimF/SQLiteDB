@@ -15,6 +15,7 @@
 @objc(SQLTable)
 class SQLTable:NSObject {
 	private var table = ""
+	private static var verified = [String:Bool]()
 	
 	private static var table:String {
 		let cls = "\(classForCoder())".lowercased()
@@ -30,6 +31,32 @@ class SQLTable:NSObject {
 		let ndx = cls.characters.index(before:cls.endIndex)
 		let tnm = cls.hasSuffix("y") ? cls.substring(to:ndx) + "ies" : cls + "s"
 		self.table = tnm
+		let verified = SQLTable.verified[table]
+		if verified == nil || !verified! {
+			// Verify that the table exists in DB
+			let db = SQLiteDB.shared
+			var sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='\(table)'"
+			let cnt = db.query(sql:sql).count
+			if cnt == 1 {
+				// Table exists, proceed
+				SQLTable.verified[table] = true
+			} else if cnt == 0 {
+				// Table does not exist, create it
+				sql = "CREATE TABLE IF NOT EXISTS \(table) ("
+				// Columns
+				let cols = values()
+				sql += getColumnSQL(columns:cols)
+				// Close query
+				sql += ")"
+				let rc = db.execute(sql:sql)
+				if rc == 0 {
+					assert(false, "Error creating table - \(table) with SQL: \(sql)")
+				}
+				SQLTable.verified[table] = true
+			} else {
+				assert(false, "Got more than one table in DB with same name! Count: \(cnt) for \(table)")
+			}
+		}
 	}
 	
 	// MARK:- Table property management
@@ -251,29 +278,10 @@ class SQLTable:NSObject {
 				if ignoredKeys().contains(name) || name.hasSuffix(".storage") {
 					continue
 				}
-				res[name] = get(value:attr.value)
+				res[name] = attr.value
 			}
 		}
 		return res
-	}
-	
-	private func get(value:Any) -> Any {
-		if value is String {
-			return value as! String
-		} else if value is Int {
-			return value as! Int
-		} else if value is Float {
-			return value as! Float
-		} else if value is Double {
-			return value as! Double
-		} else if value is Bool {
-			return value as! Bool
-		} else if value is Date {
-			return value as! Date
-		} else if value is NSData {
-			return value as! NSData
-		}
-		return "nAn"
 	}
 	
 	private func getSQL(data:[String:Any], forInsert:Bool = true) -> (String, [Any]?) {
@@ -328,5 +336,43 @@ class SQLTable:NSObject {
 		}
 //		NSLog("Final SQL: \(sql) with parameters: \(params)")
 		return (sql, params)
+	}
+	
+	private func getColumnSQL(columns:[String:Any]) -> String {
+		var sql = ""
+		for key in columns.keys {
+			let val = columns[key]!
+			var col = "'\(key)' "
+			if val is Int {
+				// Integers
+				col += "INTEGER"
+				if key == primaryKey() {
+					col += " PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE"
+				}
+			} else {
+				// Other values
+				if val is Float || val is Double {
+					col += "REAL"
+				} else if val is Bool {
+					col += "BOOLEAN"
+				} else if val is Date {
+					col += "DATE"
+				} else if val is NSData {
+					col += "BLOB"
+				} else {
+					// Default to text
+					col += "TEXT"
+				}
+				if key == primaryKey() {
+					col += " PRIMARY KEY NOT NULL UNIQUE"
+				}
+			}
+			if sql.isEmpty {
+				sql = col
+			} else {
+				sql += ", " + col
+			}
+		}
+		return sql
 	}
 }

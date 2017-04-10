@@ -9,12 +9,13 @@
 import UIKit
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate:UIResponder, UIApplicationDelegate {
                             
 	var window: UIWindow?
 	let db = SQLiteDB.shared
 
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
+		_ = db.openDB(copyFile:false)
 		return true
 	}
 

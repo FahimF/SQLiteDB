@@ -21,7 +21,7 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to:sqlite3_destructor_type.self
 // MARK:- SQLiteDB Class - Does all the work
 @objc(SQLiteDB)
 class SQLiteDB:NSObject {
-	let DB_NAME = "data.db"
+	var DB_NAME = "data.db"
 	let QUEUE_LABEL = "SQLiteDB"
 	static let shared = SQLiteDB()
 	private var db:OpaquePointer? = nil
@@ -31,44 +31,12 @@ class SQLiteDB:NSObject {
 	
 	private override init() {
 		super.init()
-		// Set up for file operations
-		let fm = FileManager.default
-		// Get path to DB in Documents directory
-		var docDir = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)[0]
-		// If macOS, add app name to path since otherwise, DB could possibly interfere with another app using SQLiteDB
-#if os(OSX)
-		let info = Bundle.main.infoDictionary!
-		let appName = info["CFBundleName"] as! String
-		docDir = (docDir as NSString).appendingPathComponent(appName)
-		// Create folder if it does not exist
-		if !fm.fileExists(atPath:docDir) {
-			do {
-				try fm.createDirectory(atPath:docDir, withIntermediateDirectories:true, attributes:nil)
-			} catch {
-				assert(false, "SQLiteDB: Error creating DB directory: \(docDir) on macOS")
-				return
-			}
-		}
-#endif
-		let path = (docDir as NSString).appendingPathComponent(DB_NAME)
-		// Check if copy of DB is there in Documents directory
-		if !(fm.fileExists(atPath:path)) {
-			// The database does not exist, so copy to Documents directory
-			guard let rp = Bundle.main.resourcePath else { return }
-			let from = (rp as NSString).appendingPathComponent(DB_NAME)
-			do {
-				try fm.copyItem(atPath:from, toPath:path)
-			} catch let error {
-				assert(false, "SQLiteDB: Failed to copy writable version of DB! Error - \(error.localizedDescription)")
-				return
-			}
-		}
-		openDB(path:path)
-	}
-	
-	private init(path:String) {
-		super.init()
-		openDB(path:path)
+		// Set up essentials
+		queue = DispatchQueue(label:QUEUE_LABEL, attributes:[])
+		// You need to set the locale in order for the 24-hour date format to work correctly on devices where 24-hour format is turned off
+		fmt.locale = Locale(identifier:"en_US_POSIX")
+		fmt.timeZone = TimeZone(secondsFromGMT:0)
+		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
 	}
 	
 	deinit {
@@ -80,12 +48,63 @@ class SQLiteDB:NSObject {
 	}
 	
 	// MARK:- Public Methods
+	func openDB(copyFile:Bool = true) -> Bool {
+		if db != nil {
+			closeDB()
+		}
+		// Set up for file operations
+		let fm = FileManager.default
+		// Get path to DB in Documents directory
+		var docDir = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)[0]
+		// If macOS, add app name to path since otherwise, DB could possibly interfere with another app using SQLiteDB
+		#if os(OSX)
+			let info = Bundle.main.infoDictionary!
+			let appName = info["CFBundleName"] as! String
+			docDir = (docDir as NSString).appendingPathComponent(appName)
+			// Create folder if it does not exist
+			if !fm.fileExists(atPath:docDir) {
+				do {
+					try fm.createDirectory(atPath:docDir, withIntermediateDirectories:true, attributes:nil)
+				} catch {
+					assert(false, "SQLiteDB: Error creating DB directory: \(docDir) on macOS")
+					return false
+				}
+			}
+		#endif
+		let path = (docDir as NSString).appendingPathComponent(DB_NAME)
+		// Check if DB is there in Documents directory
+		if !(fm.fileExists(atPath:path)) && copyFile {
+			// The database does not exist, so copy it
+			guard let rp = Bundle.main.resourcePath else { return false }
+			let from = (rp as NSString).appendingPathComponent(DB_NAME)
+			do {
+				try fm.copyItem(atPath:from, toPath:path)
+			} catch let error {
+				assert(false, "SQLiteDB: Failed to copy writable version of DB! Error - \(error.localizedDescription)")
+				return false
+			}
+		}
+		// Open the DB
+		let cpath = path.cString(using:String.Encoding.utf8)
+		let error = sqlite3_open(cpath!, &db)
+		if error != SQLITE_OK {
+			// Open failed, close DB and fail
+			NSLog("SQLiteDB - failed to open DB!")
+			sqlite3_close(db)
+			return false
+		}
+		NSLog("SQLiteDB opened!")
+		return true
+	}
+	
+	// Return an ISO-8601 date string
 	func dbDate(dt:Date) -> String {
 		return fmt.string(from:dt)
 	}
 	
 	// Execute SQL with parameters and return result code
-	func execute(sql:String, parameters:[Any]?=nil)->Int {
+	func execute(sql:String, parameters:[Any]? = nil)->Int {
+		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		var result = 0
 		queue.sync {
 			if let stmt = self.prepare(sql:sql, params:parameters) {
@@ -96,7 +115,8 @@ class SQLiteDB:NSObject {
 	}
 	
 	// Run SQL query with parameters
-	func query(sql:String, parameters:[Any]?=nil)->[[String:Any]] {
+	func query(sql:String, parameters:[Any]? = nil)->[[String:Any]] {
+		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		var rows = [[String:Any]]()
 		queue.sync {
 			if let stmt = self.prepare(sql:sql, params:parameters) {
@@ -108,6 +128,7 @@ class SQLiteDB:NSObject {
 	
 	// Versioning
 	func getDBVersion() -> Int {
+		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		var version = 0
 		let arr = query(sql:"PRAGMA user_version")
 		if arr.count == 1 {
@@ -118,34 +139,16 @@ class SQLiteDB:NSObject {
 	
 	// Sets the 'user_version' value, a user-defined version number for the database. This is useful for managing migrations.
 	func set(version:Int) {
+		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		_ = execute(sql:"PRAGMA user_version=\(version)")
 	}
 	
 	// MARK:- Private Methods
-	private func openDB(path:String) {
-		// Set up essentials
-		queue = DispatchQueue(label:QUEUE_LABEL, attributes:[])
-		// You need to set the locale in order for the 24-hour date format to work correctly on devices where 24-hour format is turned off
-		fmt.locale = Locale(identifier:"en_US_POSIX")
-		fmt.timeZone = TimeZone(secondsFromGMT:0)
-		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-		// Open the DB
-		let cpath = path.cString(using: String.Encoding.utf8)
-		let error = sqlite3_open(cpath!, &db)
-		if error != SQLITE_OK {
-			// Open failed, close DB and fail
-			NSLog("SQLiteDB - failed to open DB!")
-			sqlite3_close(db)
-			return
-		}
-		NSLog("SQLiteDB opened!")
-	}
-	
 	private func closeDB() {
 		if db != nil {
 			// Get launch count value
 			let ud = UserDefaults.standard
-			var launchCount = ud.integer(forKey: "LaunchCount")
+			var launchCount = ud.integer(forKey:"LaunchCount")
 			launchCount -= 1
 			NSLog("SQLiteDB - Launch count \(launchCount)")
 			var clean = false
@@ -167,6 +170,7 @@ class SQLiteDB:NSObject {
 				NSLog("SQLiteDB - Error cleaning DB")
 			}
 			sqlite3_close(db)
+			self.db = nil
 		}
 	}
 	
@@ -188,9 +192,9 @@ class SQLiteDB:NSObject {
 		if params != nil {
 			// Validate parameters
 			let cntParams = sqlite3_bind_parameter_count(stmt)
-			let cnt = CInt(params!.count)
-			if cntParams != cnt {
-				let msg = "SQLiteDB - failed to bind parameters, counts did not match. SQL: \(sql), Parameters: \(params)"
+			let cnt = params!.count
+			if cntParams != CInt(cnt) {
+				let msg = "SQLiteDB - failed to bind parameters, counts did not match. SQL: \(sql), Parameters: \(params!)"
 				NSLog(msg)
 				return nil
 			}
@@ -220,7 +224,7 @@ class SQLiteDB:NSObject {
 				if flag != SQLITE_OK {
 					sqlite3_finalize(stmt)
 					if let error = String(validatingUTF8:sqlite3_errmsg(self.db)) {
-						let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params), Index: \(ndx) Error: \(error)"
+						let msg = "SQLiteDB - failed to bind for SQL: \(sql), Parameters: \(params!), Index: \(ndx) Error: \(error)"
 						NSLog(msg)
 					}
 					return nil
