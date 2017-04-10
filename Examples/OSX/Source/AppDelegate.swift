@@ -13,9 +13,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 	let db = SQLiteDB.shared
 
 	func applicationDidFinishLaunching(_ notification:Notification) {
-		// Insert code here to initialize your application
-		let cats = Category.rows(order:"id ASC") as! [Category]
-		NSLog("Got categories: \(cats)")
+		// Open DB first
+		if db.openDB() {
+			// Query category
+			let cats = Category.rows(order:"id ASC") as! [Category]
+			NSLog("Got categories: \(cats)")
+		}
 	}
 	
 	func applicationWillTerminate(aNotification: NSNotification) {
