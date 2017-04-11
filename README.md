@@ -41,45 +41,45 @@ You can use the `SQLiteDB` class directly to get a reference to the database and
 * You can gain access to the shared database instance as follows:
 
 	```swift
-		let db = SQLiteDB.shared
+	let db = SQLiteDB.shared
 	```
 
-* Before you make any SQL queries, or execute commands, you should open the SQLite database. In most cases, this needs to be done only once per application and so you can do it in your `AppDelegate`, for example.
+* Before you make any SQL queries, or execute commands, you should open the SQLite database. In most cases, this needs to be done only once per application and so you can do it in your `AppDelegate`, for example:
 	
 	```swift
-		db.openDB()
+	db.openDB()
 	```
  
 * You can make SQL queries using the `query` method (the results are returned as an array of dictionaries where the key is a `String` and the value is of type `Any`):
 
 	```swift
-		let data = db.query(sql:"SELECT * FROM customers WHERE name='John'")
-		let row = data[0]
-		if let name = row["name"] {
-			textLabel.text = name as! String
-		}
+	let data = db.query(sql:"SELECT * FROM customers WHERE name='John'")
+	let row = data[0]
+	if let name = row["name"] {
+		textLabel.text = name as! String
+	}
 	```
 In the above, `db` is a reference to the shared SQLite database instance. You can access a column from your query results by subscripting a row of the returned results (the rows are dictionaries) based on the column name. That returns an optional `Any` value which you can cast to the relevant data type.
 
 * If you'd prefer to bind values to your query instead of creating the full SQL statement, then you can execute the above SQL also like this:
 
 	```swift
-		let name = "John"
-		let data = db.query(sql:"SELECT * FROM customers WHERE name=?", parameters:[name])
+	let name = "John"
+	let data = db.query(sql:"SELECT * FROM customers WHERE name=?", parameters:[name])
 	```
 
 * Of course, you can also construct the above SQL query by using Swift's string manipulation functionality as well (without using the SQLite bind functionality):
 
 	```swift
-		let name = "John"
-		let data = db.query(sql:"SELECT * FROM customers WHERE name='\(name)'")
+	let name = "John"
+	let data = db.query(sql:"SELECT * FROM customers WHERE name='\(name)'")
 	```
 
 * You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 
 	```swift
-		let result = db.execute(sql:"DELETE FROM customers WHERE last_name='Smith'")
-		// If the result is 0 then the operation failed, for inserts the result gives the newly inserted record ID
+	let result = db.execute(sql:"DELETE FROM customers WHERE last_name='Smith'")
+	// If the result is 0 then the operation failed, for inserts the result gives the newly inserted record ID
 	```
 
 * The `esc` method which was previously available in SQLiteDB is no longer there. So, for instance, if you need to escape strings with embedded quotes, you should use the SQLite parameter binding functionality as shown above.
@@ -92,7 +92,7 @@ If you create a sub-class of `SQLTable`, define properties where the names match
 
 Additionally, with this approach, you don't need to include an SQLite database project with your app (unless you want to). SQLiteDB will infer the structure for the tables based on your `SQLTable` sub-classes and automatically create the necessary tables for you, if they aren't present.
 
-For example, say that you have a `Categories` table with just two columns - `id` and `name`. Then, the SQLTable sub-class definition for the table would look something like this:
+For example, say that you have a `Categories` table with just two columns - `id` and `name`. Then, the `SQLTable` sub-class definition for the table would look something like this:
 
 ```swift
 class Category:SQLTable {
@@ -115,7 +115,7 @@ Once you do that, you can run any SQL queries or execute commands on the databas
 
 Here are some quick examples of how you use the `Category` class from the above example:
 
-* Add a new Category item to the table:
+* Add a new `Category` item to the table:
 
 ```swift
 let category = Category()
@@ -125,7 +125,7 @@ _ = category.save()
 
 The save method returns a non-zero value if the save was successful. In the case of a new record, the return value is the `id` of the newly inserted row. You can check the return value to see if the save was sucessful or not since a 0 value means that the save failed for some reason.
 
-* Get a Category by `id`:
+* Get a `Category` by `id`:
 
 ```swift
 if let category = Category.rowBy(id:10) as? Category {
@@ -133,13 +133,13 @@ if let category = Category.rowBy(id:10) as? Category {
 }
 ```
 
-* Query the Categories table:
+* Query the `Category` table:
 
 ```swift
 let array = Category.rows(filter:"id > 10") as! [Category]
 ```
 
-* Get a specific category row (to display categories via a `UITableView`, for example):
+* Get a specific `Category` row (to display categories via a `UITableView`, for example):
 
 ```swift
 if let category = row(number:1) as? Category {
@@ -147,7 +147,7 @@ if let category = row(number:1) as? Category {
 }
 ```
 
-* Delete a category:
+* Delete a `Category`:
 
 ```swift
 if let category = Category.rowBy(id:10) as? Category {
