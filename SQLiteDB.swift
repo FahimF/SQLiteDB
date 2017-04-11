@@ -7,26 +7,29 @@
 //
 
 import Foundation
-#if os(iOS)
-import UIKit
-#else
-import AppKit
-#endif
 
 let SQLITE_DATE = SQLITE_NULL + 1
 
 private let SQLITE_STATIC = unsafeBitCast(0, to:sqlite3_destructor_type.self)
 private let SQLITE_TRANSIENT = unsafeBitCast(-1, to:sqlite3_destructor_type.self)
 
-// MARK:- SQLiteDB Class - Does all the work
+// MARK:- SQLiteDB Class
+/// Simple wrapper class to provide basic SQLite database access.
 @objc(SQLiteDB)
 class SQLiteDB:NSObject {
+	/// The SQLite database file name - defaults to `data.db`.
 	var DB_NAME = "data.db"
-	let QUEUE_LABEL = "SQLiteDB"
+	/// Singleton instance for access to the SQLiteDB class
 	static let shared = SQLiteDB()
-	private var db:OpaquePointer? = nil
+	/// Internal name for GCD queue used to execute SQL commands so that all commands are executed sequentially
+	private let QUEUE_LABEL = "SQLiteDB"
+	/// The internal GCD queue
 	private var queue:DispatchQueue!
+	/// Internal handle to the currently open SQLite DB instance
+	private var db:OpaquePointer? = nil
+	/// Internal DateFormatter instance used to manage date formatting
 	private let fmt = DateFormatter()
+	/// Internal reference to the currently open database path
 	private var path:String!
 	
 	private override init() {
@@ -43,11 +46,16 @@ class SQLiteDB:NSObject {
 		closeDB()
 	}
  
+	/// Output the current SQLite database path
 	override var description:String {
 		return "SQLiteDB: \(path)"
 	}
 	
 	// MARK:- Public Methods
+	/// Open the database specified by the `DB_NAME` variable and assigns the internal DB references. If a database is currently open, the method first closes the current database and gets a new DB references to the current database pointed to by `DB_NAME`
+	///
+	/// - Parameter copyFile: Whether to copy the file named in `DB_NAME` from resources or to create a new empty database file. Defaults to `true`
+	/// - Returns: Returns a boolean value indicating if the database was successfully opened or not.
 	func openDB(copyFile:Bool = true) -> Bool {
 		if db != nil {
 			closeDB()
@@ -97,12 +105,20 @@ class SQLiteDB:NSObject {
 		return true
 	}
 	
-	// Return an ISO-8601 date string
-	func dbDate(dt:Date) -> String {
-		return fmt.string(from:dt)
+	/// Returns an ISO-8601 date string for a given date.
+	///
+	/// - Parameter date: The date to format in to an ISO-8601 string
+	/// - Returns: A string with the date in ISO-8601 format.
+	func dbDate(date:Date) -> String {
+		return fmt.string(from:date)
 	}
 	
-	// Execute SQL with parameters and return result code
+	/// Execute SQL (non-query) command with (optional) parameters and return result code
+	///
+	/// - Parameters:
+	///   - sql: The SQL statement to be executed
+	///   - parameters: An array of optional parameters in case the SQL statement includes bound parameters - indicated by `?`
+	/// - Returns: The ID for the last inserted row (if it was an INSERT command and the ID is an integer column) or a result code indicating the status of the command execution. A non-zero result indicates success and a 0 indicates failure.
 	func execute(sql:String, parameters:[Any]? = nil)->Int {
 		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		var result = 0
@@ -114,7 +130,12 @@ class SQLiteDB:NSObject {
 		return result
 	}
 	
-	// Run SQL query with parameters
+	/// Run an SQL query with (parameters) parameters and returns an array of dictionaries where the keys are the column names
+	///
+	/// - Parameters:
+	///   - sql: The SQL query to be executed
+	///   - parameters: An array of optional parameters in case the SQL statement includes bound parameters - indicated by `?`
+	/// - Returns: An empty array if the query resulted in no rows. Otherwise, an array of dictionaries where each dictioanry key is a column name and the value is the column value.
 	func query(sql:String, parameters:[Any]? = nil)->[[String:Any]] {
 		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		var rows = [[String:Any]]()
@@ -126,7 +147,9 @@ class SQLiteDB:NSObject {
 		return rows
 	}
 	
-	// Versioning
+	/// Get the current internal DB version
+	///
+	/// - Returns: An interger indicating the current internal DB version as set by the developer via code. If a DB version was not set, this defaults to 0.
 	func getDBVersion() -> Int {
 		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		var version = 0
@@ -137,13 +160,18 @@ class SQLiteDB:NSObject {
 		return version
 	}
 	
-	// Sets the 'user_version' value, a user-defined version number for the database. This is useful for managing migrations.
+	/// Set the current DB version, a user-defined version number for the database. This value can be useful in managing data migrations so that you can add new columns to your tables or massage your existing data to suit a new situation.
+	///
+	/// - Parameter version: An integer value indicating the new DB version.
 	func set(version:Int) {
 		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		_ = execute(sql:"PRAGMA user_version=\(version)")
 	}
 	
 	// MARK:- Private Methods
+	/// Close the currently open SQLite database. Before closing the DB, the framework automatically takes care of optimizing the DB at frequent intervals by running the following commands:
+	/// 1. **VACUUM** - Repack the DB to take advantage of deleted data
+	/// 2. **ANALYZE** - Gather information about the tables and indices so that the query optimizer can use the information to make queries work better.
 	private func closeDB() {
 		if db != nil {
 			// Get launch count value
@@ -174,7 +202,12 @@ class SQLiteDB:NSObject {
 		}
 	}
 	
-	// Private method which prepares the SQL
+	/// Private method to prepare an SQL statement before executing it.
+	///
+	/// - Parameters:
+	///   - sql: The SQL query or command to be prepared.
+	///   - params: An array of optional parameters in case the SQL statement includes bound parameters - indicated by `?`
+	/// - Returns: A pointer to a finalized SQLite statement that can be used to execute the query later
 	private func prepare(sql:String, params:[Any]?) -> OpaquePointer? {
 		var stmt:OpaquePointer? = nil
 		let cSql = sql.cString(using: String.Encoding.utf8)
@@ -234,7 +267,12 @@ class SQLiteDB:NSObject {
 		return stmt
 	}
 	
-	// Private method which handles the actual execution of an SQL statement
+	/// Private method which handles the actual execution of an SQL statement which had been prepared previously.
+	///
+	/// - Parameters:
+	///   - stmt: The previously prepared SQLite statement
+	///   - sql: The SQL command to be excecuted
+	/// - Returns: The ID for the last inserted row (if it was an INSERT command and the ID is an integer column) or a result code indicating the status of the command execution. A non-zero result indicates success and a 0 indicates failure.
 	private func execute(stmt:OpaquePointer, sql:String)->Int {
 		// Step
 		let res = sqlite3_step(stmt)
@@ -267,7 +305,12 @@ class SQLiteDB:NSObject {
 		return result
 	}
 	
-	// Private method which handles the actual execution of an SQL query
+	/// Private method which handles the actual execution of an SQL query which had been prepared previously.
+	///
+	/// - Parameters:
+	///   - stmt: The previously prepared SQLite statement
+	///   - sql: The SQL query to be run
+	/// - Returns: An empty array if the query resulted in no rows. Otherwise, an array of dictionaries where each dictioanry key is a column name and the value is the column value.
 	private func query(stmt:OpaquePointer, sql:String)->[[String:Any]] {
 		var rows = [[String:Any]]()
 		var fetchColumnInfo = true
@@ -306,7 +349,12 @@ class SQLiteDB:NSObject {
 		return rows
 	}
 	
-	// Get column type
+	/// Private method that returns the declared SQLite data type for a specific column in a pre-prepared SQLite statement.
+	///
+	/// - Parameters:
+	///   - index: The 0-based index of the column
+	///   - stmt: The previously prepared SQLite statement
+	/// - Returns: A CInt value indicating the SQLite data type
 	private func getColumnType(index:CInt, stmt:OpaquePointer)->CInt {
 		var type:CInt = 0
 		// Column types - http://www.sqlite.org/datatype3.html (section 2.2 table column 1)
@@ -356,6 +404,13 @@ class SQLiteDB:NSObject {
 	}
 	
 	// Get column value
+	/// Private method to return the column value for a specified SQLite column.
+	///
+	/// - Parameters:
+	///   - index: The 0-based index of the column
+	///   - type: The declared SQLite data type for the column
+	///   - stmt: The previously prepared SQLite statement
+	/// - Returns: A value for the column if the data is of a recognized SQLite data type, or nil if the value was NULL
 	private func getColumnValue(index:CInt, type:CInt, stmt:OpaquePointer)->Any? {
 		// Integer
 		if type == SQLITE_INTEGER {
