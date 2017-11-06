@@ -1,4 +1,4 @@
-# SQLiteDB 
+# SQLiteDB
 
 SQLiteDB is a simple and lightweight SQLite wrapper for Swift. It allows all basic SQLite functionality including being able to bind values to parameters in an SQL statement. You can either include an SQLite database file with your project (in case you want to pre-load data) and have it be copied over automatically in to your documents folder, or have the necessary database and the relevant table structures created automatically for you via SQLiteDB.
 
@@ -10,15 +10,15 @@ SQLiteDB is a simple and lightweight SQLite wrapper for Swift. It allows all bas
 
 * If you want to pre-load data or have the table structures and indexes pre-created, or, if you are not using `SQLTable` sub-classes but are instead using `SQLiteDB` directly, then you need to create an SQLite database file to be included in your project.
 
-	Create your SQLite database however you like, but name it `data.db` and then add the `data.db` file to your Xcode project. (If you want to name the database file something other than `data.db`, then set the `DB_NAME` property in the `SQLiteDB` class accordingly.)
+  Create your SQLite database however you like, but name it `data.db` and then add the `data.db` file to your Xcode project. (If you want to name the database file something other than `data.db`, then set the `DB_NAME` property in the `SQLiteDB` class accordingly.)
 
     **Note:** Remember to add the database file above to your application target when you add it to the project. If you don't add the database file to a project target, it will not be copied to the device along with the other project resources.
     
-	If you do not want to pre-load data and are using `SQLTable` sub-classes to access your tables, you can skip the above step since SQLiteDB will automatically create your table structures for you if the database file is not included in the project. However, in order for this to work, you need to pass `false` as the parameter for the `openDB` method when you inovke it, like this:
+  If you do not want to pre-load data and are using `SQLTable` sub-classes to access your tables, you can skip the above step since SQLiteDB will automatically create your table structures for you if the database file is not included in the project. However, in order for this to work, you need to pass `false` as the parameter for the `openDB` method when you inovke it, like this:
 	
-	```swift
-	db.openDB(copyFile:false)
-	```
+  	```swift
+  	db.openDB(copyFile:false)
+  	```
 	
 * Add all of the included source files (except for README.md, of course) to your project.
 
@@ -40,47 +40,47 @@ You can use the `SQLiteDB` class directly to get a reference to the database and
 
 * You can gain access to the shared database instance as follows:
 
-	```swift
-	let db = SQLiteDB.shared
-	```
+  	```swift
+  	let db = SQLiteDB.shared
+  	```
 
 * Before you make any SQL queries, or execute commands, you should open the SQLite database. In most cases, this needs to be done only once per application and so you can do it in your `AppDelegate`, for example:
 	
-	```swift
-	db.openDB()
-	```
+  	```swift
+  	db.openDB()
+  	```
  
 * You can make SQL queries using the `query` method (the results are returned as an array of dictionaries where the key is a `String` and the value is of type `Any`):
 
-	```swift
-	let data = db.query(sql:"SELECT * FROM customers WHERE name='John'")
-	let row = data[0]
-	if let name = row["name"] {
-		textLabel.text = name as! String
-	}
-	```
+  	```swift
+  	let data = db.query(sql:"SELECT * FROM customers WHERE name='John'")
+  	let row = data[0]
+  	if let name = row["name"] {
+  		textLabel.text = name as! String
+  	}
+  	```
 In the above, `db` is a reference to the shared SQLite database instance. You can access a column from your query results by subscripting a row of the returned results (the rows are dictionaries) based on the column name. That returns an optional `Any` value which you can cast to the relevant data type.
 
 * If you'd prefer to bind values to your query instead of creating the full SQL statement, then you can execute the above SQL also like this:
 
-	```swift
-	let name = "John"
-	let data = db.query(sql:"SELECT * FROM customers WHERE name=?", parameters:[name])
-	```
+  	```swift
+  	let name = "John"
+  	let data = db.query(sql:"SELECT * FROM customers WHERE name=?", parameters:[name])
+  	```
 
 * Of course, you can also construct the above SQL query by using Swift's string manipulation functionality as well (without using the SQLite bind functionality):
 
-	```swift
-	let name = "John"
-	let data = db.query(sql:"SELECT * FROM customers WHERE name='\(name)'")
-	```
+  	```swift
+  	let name = "John"
+  	let data = db.query(sql:"SELECT * FROM customers WHERE name='\(name)'")
+  	```
 
 * You can execute all non-query SQL commands (INSERT, DELETE, UPDATE etc.) using the `execute` method:
 
-	```swift
-	let result = db.execute(sql:"DELETE FROM customers WHERE last_name='Smith'")
-	// If the result is 0 then the operation failed, for inserts the result gives the newly inserted record ID
-	```
+  	```swift
+  	let result = db.execute(sql:"DELETE FROM customers WHERE last_name='Smith'")
+  	// If the result is 0 then the operation failed, for inserts the result gives the newly inserted record ID
+  	```
 
 * The `esc` method which was previously available in SQLiteDB is no longer there. So, for instance, if you need to escape strings with embedded quotes, you should use the SQLite parameter binding functionality as shown above.
 
@@ -161,11 +161,8 @@ You can refer to the sample iOS and macOS projects for more examples of how to i
 ## Questions?
 
 * FAQ: [FAQs](https://github.com/FahimF/SQLiteDB/wiki/FAQs)
-* [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/fahimfarook?utm_source=github&utm_medium=button&utm_term=fahimfarook&utm_campaign=github)
+* [IMG](https://www.codementor.io/fahimfarook?utm_source=github&utm_medium=button&utm_term=fahimfarook&utm_campaign=github)
 * Web: [http://rooksoft.sg/](http://rooksoft.sg/)
 * Twitter: [http://twitter.com/FahimFarook](http://twitter.com/FahimFarook)
 
 SQLiteDB is under DWYWPL - Do What You Will Public License :) Do whatever you want either personally or commercially with the code but if you'd like, feel free to attribute in your app.
-
-
-

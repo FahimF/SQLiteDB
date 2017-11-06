@@ -10,7 +10,7 @@ import Foundation
 
 // MARK:- SQLiteDB Class
 /// Base class for providing object-based access to SQLite tables. Simply define the properties and their default values (a value has to be there in order to determine value type) and SQLTable will handle the basic CRUD (creating, reading, updating, deleting) actions for you without any additional code.
-@objc(SQLTable)
+@objcMembers
 class SQLTable:NSObject {
 	/// Internal reference to the SQLite table name as determined based on the name of the `SQLTable` sub-class name. The sub-class name should be in the singular - for example, Task for a tasks table.
 	private var table = ""
@@ -20,8 +20,8 @@ class SQLTable:NSObject {
 	/// Static variable indicating the table name - used in class methods since the instance variable `table` is not accessible in class methods.
 	private static var table:String {
 		let cls = "\(classForCoder())".lowercased()
-		let ndx = cls.characters.index(before:cls.endIndex)
-		let tnm = cls.hasSuffix("y") ? cls.substring(to:ndx) + "ies" : cls + "s"
+		let ndx = cls.index(before:cls.endIndex)
+		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : cls + "s"
 		return tnm
 	}
 	
@@ -30,8 +30,8 @@ class SQLTable:NSObject {
 		super.init()
 		// Table name
 		let cls = "\(classForCoder)".lowercased()
-		let ndx = cls.characters.index(before:cls.endIndex)
-		let tnm = cls.hasSuffix("y") ? cls.substring(to:ndx) + "ies" : cls + "s"
+		let ndx = cls.index(before:cls.endIndex)
+		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : cls + "s"
 		self.table = tnm
 		let verified = SQLTable.verified[table]
 		if verified == nil || !verified! {

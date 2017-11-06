@@ -371,7 +371,7 @@ class SQLiteDB:NSObject {
 			var tmp = String(validatingUTF8:buf!)!.uppercased()
 			// Remove bracketed section
 			if let pos = tmp.range(of:"(") {
-				tmp = tmp.substring(to:pos.lowerBound)
+				tmp = String(tmp[..<pos.lowerBound])
 			}
 			// Remove unsigned?
 			// Remove spaces
