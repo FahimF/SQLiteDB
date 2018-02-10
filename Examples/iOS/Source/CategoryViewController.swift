@@ -10,8 +10,6 @@ import UIKit
 
 class CategoryViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 	@IBOutlet var table:UITableView!
-	var data = [Category]()
-	let db = SQLiteDB.shared
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -19,8 +17,6 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 
 	override func viewWillAppear(_ animated:Bool) {
 		super.viewWillAppear(animated)
-		data = Category.rows(order:"name ASC") as! [Category]
-		table.reloadData()
 	}
 	
 	override func didReceiveMemoryWarning() {
@@ -29,14 +25,15 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 
 	// UITableView Delegates
 	func tableView(_ tv:UITableView, numberOfRowsInSection section:Int) -> Int {
-		let cnt = data.count
+		let cnt = Category.count()
 		return cnt
 	}
 	
 	func tableView(_ tv:UITableView, cellForRowAt indexPath:IndexPath) -> UITableViewCell {
 		let cell = tv.dequeueReusableCell(withIdentifier: "CategoryCell")!
-		let cat = data[indexPath.row]
-		cell.textLabel?.text = cat.name
+		if let cat = Category.row(number: indexPath.row, order: "name") as? Category {
+			cell.textLabel?.text = cat.name
+		}
 		return cell
 	}
 }

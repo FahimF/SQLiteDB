@@ -11,17 +11,19 @@ import Foundation
 // MARK:- SQLiteDB Class
 /// Base class for providing object-based access to SQLite tables. Simply define the properties and their default values (a value has to be there in order to determine value type) and SQLTable will handle the basic CRUD (creating, reading, updating, deleting) actions for you without any additional code.
 @objcMembers
-class SQLTable:NSObject {
+class SQLTable: NSObject {
 	/// Internal reference to the SQLite table name as determined based on the name of the `SQLTable` sub-class name. The sub-class name should be in the singular - for example, Task for a tasks table.
-	private var table = ""
+	internal var table = ""
 	/// Internal dictionary to keep track of whether a specific table was verfied to be in existence in the database. This dictionary is used to automatically create the table if it does not exist in the DB.
 	private static var verified = [String:Bool]()
+	/// Internal pointer to the main database
+	private var db = SQLiteDB.shared
 	
 	/// Static variable indicating the table name - used in class methods since the instance variable `table` is not accessible in class methods.
 	private static var table:String {
 		let cls = "\(classForCoder())".lowercased()
 		let ndx = cls.index(before:cls.endIndex)
-		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : cls + "s"
+		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : (cls.hasSuffix("s") ? cls + "es" : cls + "s")
 		return tnm
 	}
 	
@@ -29,15 +31,11 @@ class SQLTable:NSObject {
 	required override init() {
 		super.init()
 		// Table name
-		let cls = "\(classForCoder)".lowercased()
-		let ndx = cls.index(before:cls.endIndex)
-		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : cls + "s"
-		self.table = tnm
+		self.table = type(of: self).table
 		let verified = SQLTable.verified[table]
 		if verified == nil || !verified! {
 			// Verify that the table exists in DB
-			let db = SQLiteDB.shared
-			var sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='\(table)'"
+			var sql = "SELECT name FROM sqlite_master WHERE type='table' AND lower(name)='\(table)'"
 			let cnt = db.query(sql:sql).count
 			if cnt == 1 {
 				// Table exists, proceed
@@ -75,14 +73,6 @@ class SQLTable:NSObject {
 	func ignoredKeys() -> [String] {
 		return []
 	}
-	
-//	func setPrimaryKey(val:Any) {
-//		setValue(val, forKey:primaryKey())
-//	}
-//
-//	func getPrimaryKey() -> Any? {
-//		return value(forKey:primaryKey())
-//	}
 	
 	// MARK:- Class Methods
 	/// Return an array of values for an `SQLTable` sub-class (optionally) matching specified filter criteria, (optionally) in a given column order, and (optionally) limited to a specific number of rows.
@@ -277,7 +267,6 @@ class SQLTable:NSObject {
 	///
 	/// - Returns: A boolean value indicating the success or failure of the operation.
 	func delete() -> Bool {
-		let db = SQLiteDB.shared
 		let key = primaryKey()
 		let data = values()
 		if let rid = data[key] {
@@ -290,7 +279,6 @@ class SQLTable:NSObject {
 	
 	/// Update the data for this particular `SQLTable` sub-class instance from the database so that all values are updated with the latest values from the database.
 	func refresh() {
-		let db = SQLiteDB.shared
 		let key = primaryKey()
 		let data = values()
 		if let rid = data[key] {
@@ -318,7 +306,7 @@ class SQLTable:NSObject {
 	/// Fetch a dictionary of property names and their corresponding values that are supposed to be persisted to the underlying table. Any property names returned via the `ignoredKeys` method will be left out of the dictionary.
 	///
 	/// - Returns: A dictionary of property names and their corresponding values.
-	private func values() -> [String:Any] {
+	internal func values() -> [String:Any] {
 		var res = [String:Any]()
 		let obj = Mirror(reflecting:self)
 		for (_, attr) in obj.children.enumerated() {
