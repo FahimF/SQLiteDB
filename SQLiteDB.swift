@@ -19,6 +19,16 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to:sqlite3_destructor_type.self
 class SQLiteDB:NSObject {
 	/// The SQLite database file name - defaults to `data.db`.
 	var DB_NAME = "data.db"
+	/// Does this database have CloudKit support for remote data saving?
+	var cloudEnabled = false {
+		didSet {
+			if cloudEnabled {
+				self.cloudDB = CloudDB.shared
+			} else {
+				self.cloudDB = nil
+			}
+		}
+	}
 	/// Singleton instance for access to the SQLiteDB class
 	static let shared = SQLiteDB()
 	/// Internal name for GCD queue used to execute SQL commands so that all commands are executed sequentially
@@ -31,6 +41,8 @@ class SQLiteDB:NSObject {
 	private let fmt = DateFormatter()
 	/// Internal reference to the currently open database path
 	private var path:String!
+	/// Internal reference to CloudDB instance
+	private var cloudDB: CloudDB!
 	
 	private override init() {
 		super.init()
@@ -166,6 +178,30 @@ class SQLiteDB:NSObject {
 	func set(version:Int) {
 		assert(db != nil, "Database has not been opened! Use the openDB() method before any DB queries.")
 		_ = execute(sql:"PRAGMA user_version=\(version)")
+	}
+	
+	/// Create a record zone in the private DB for the given table
+	/// - Parameter version: An integer value indicating the new DB version.
+	func createCloudZone(table: SQLTable, completion: @escaping ()->Void) {
+		cloudDB.creaeZone(table: table) {
+			completion()
+		}
+	}
+	
+	func getCloudUpdates(table: SQLTable) {
+		cloudDB.getUpdates(table: table)
+	}
+	
+	/// Save data to the cloud via CloudKit
+	/// - Parameters:
+	///   - row: The SQLTable instance to be saved remotely.
+	///   - dbOverride: A `DBType` indicating the database to save the remote data to. If set, this overrides the database set by default for the table via the `remoteDB` method. Defaults to `none`.
+	func saveToCloud(row: SQLTable, dbOverride: DBType = .none) {
+		if !cloudEnabled {
+			return
+		}
+		// Save to cloude
+		cloudDB.saveToCloud(row: row)
 	}
 	
 	// MARK:- Private Methods

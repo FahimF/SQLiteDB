@@ -8,10 +8,21 @@
 
 import Foundation
 
+/// Enumerator to be used in fetching data via some methods where you might need to specify whether you want all records, only records marked for deletion, or only records not marked for deletion.
+enum FetchType: Int {
+	case all, deleted, nondeleted
+}
+
 // MARK:- SQLiteDB Class
 /// Base class for providing object-based access to SQLite tables. Simply define the properties and their default values (a value has to be there in order to determine value type) and SQLTable will handle the basic CRUD (creating, reading, updating, deleting) actions for you without any additional code.
 @objcMembers
 class SQLTable: NSObject {
+	/// Every SQLTable sub-class will contain an `isDeleted` flag. Instead of deleting records, you should set the flag to `true` for deletions and filter your data accordingly when fetching data from `SQLTable`. This flag will be used to synchronize deletions via CloudKit
+	public var isDeleted = false
+	/// Every SQLTable sub-class will contain a `created` property indicating the creation date of the record.
+	public var created = Date()
+	/// Every SQLTable sub-class will contain a `modified` property indicating the last modification date of the record.
+	public var modified = Date()
 	/// Internal reference to the SQLite table name as determined based on the name of the `SQLTable` sub-class name. The sub-class name should be in the singular - for example, Task for a tasks table.
 	internal var table = ""
 	/// Internal dictionary to keep track of whether a specific table was verfied to be in existence in the database. This dictionary is used to automatically create the table if it does not exist in the DB.
@@ -38,14 +49,23 @@ class SQLTable: NSObject {
 			var sql = "SELECT name FROM sqlite_master WHERE type='table' AND lower(name)='\(table)'"
 			let cnt = db.query(sql:sql).count
 			if cnt == 1 {
-				// Table exists, proceed
+				// Table exists, verify strutcure and then proceed
+				verifyStructure()
 				SQLTable.verified[table] = true
 			} else if cnt == 0 {
 				// Table does not exist, create it
 				sql = "CREATE TABLE IF NOT EXISTS \(table) ("
 				// Columns
 				let cols = values()
-				sql += getColumnSQL(columns:cols)
+				var first = true
+				for col in cols {
+					if first {
+						first = false
+						sql += getColumnSQL(column:col)
+					} else {
+						sql += ", " + getColumnSQL(column: col)
+					}
+				}
 				// Close query
 				sql += ")"
 				let rc = db.execute(sql:sql)
@@ -55,6 +75,16 @@ class SQLTable: NSObject {
 				SQLTable.verified[table] = true
 			} else {
 				assert(false, "Got more than one table in DB with same name! Count: \(cnt) for \(table)")
+			}
+			// Create CloudKit zone, if necessary
+			if db.cloudEnabled {
+				if remoteDB() == DBType.privateDB {
+					db.createCloudZone(table: self) {
+						self.db.getCloudUpdates(table: self)
+					}
+				} else {
+					db.getCloudUpdates(table: self)
+				}
 			}
 		}
 	}
@@ -67,6 +97,20 @@ class SQLTable: NSObject {
 		return "id"
 	}
 	
+	/// The remote key for the table for data saved to CloudKit - defaults to `ckid`. Override this in `SQLTable` sub-classes to define a different column name as the remote key.
+	///
+	/// - Returns: A string indicating the name of the remote key column for the table. Defaults to `ckid`.
+	func remoteKey() -> String {
+		return "ckid"
+	}
+	
+	/// The remote database for the table for data saved to CloudKit - defaults to `private`. Override this in `SQLTable` sub-classes to define a different database for a specific table.
+	///
+	/// - Returns: A `DBType` enum indicating the remote database for the table. Defaults to `private`.
+	func remoteDB() -> DBType {
+		return DBType.privateDB
+	}
+	
 	/// An array of property names (in a sub-classed instance of `SQLTable`) that are to be ignored when fetching/saving information to the DB. Override this method in sub-classes when you have properties that you don't want persisted to the database.
 	///
 	/// - Returns: An array of String values indicating property/value names to be ignored when persisting data to the database.
@@ -75,17 +119,42 @@ class SQLTable: NSObject {
 	}
 	
 	// MARK:- Class Methods
+	/// Returns a WHERE clause, or an empty string, depending on the passed in `FetchType`.
+	///
+	/// - Paramter type: The type of fetch operation to be performed.
+	/// - Returns: A String for the SQL WHERE clause, or an empty string if there is no WHERE clause.
+	class func whereFor(type: FetchType) -> String {
+		switch type {
+		case .all:
+			return ""
+			
+		case .deleted:
+			return " WHERE isDeleted"
+			
+		case .nondeleted:
+			return " WHERE (NOT isDeleted OR isDeleted IS NULL)"
+		}
+	}
+	
 	/// Return an array of values for an `SQLTable` sub-class (optionally) matching specified filter criteria, (optionally) in a given column order, and (optionally) limited to a specific number of rows.
 	///
 	/// - Parameters:
 	///   - filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be fetched.
 	///   - order: The optional sort order for the data. Specify the sort order as valid SQLite statements as they would appear in an ORDER BY caluse (but without the ORDER BY part). If this parameter is omitted, or a blank string is provided, the data will not be ordered and will be retrieved in the order it was entered into the database.
 	///   - limit: The optional number of rows to fetch. If no value is provide or a 0 value is passed in, all rows will be fetched. Otherwise, up to "n" rows, where "n" is the number specified by the `limit` parameter, will be fetched depending on the other passed in parameters.
+	///   - type: The type of records to fetch. Defined via the `FetchType` enumerator and defaults to `nondeleted`.
 	/// - Returns: An array of `SQLTable` sub-class instances matching the criteria as specified in the `filter` and `limit` parameters orderd as per the `order` parameter.
-	class func rows(filter:String="", order:String="", limit:Int=0) -> [SQLTable] {
+	class func rows(filter: String = "", order: String = "", limit: Int = 0, type: FetchType = .nondeleted) -> [SQLTable] {
 		var sql = "SELECT * FROM \(table)"
-		if !filter.isEmpty {
-			sql += " WHERE \(filter)"
+		let wsql = SQLTable.whereFor(type: type)
+		if filter.isEmpty {
+			sql += wsql
+		} else {
+			if wsql.isEmpty {
+				sql += " WHERE \(filter)"
+			} else {
+				sql += wsql + " AND \(filter)"
+			}
 		}
 		if !order.isEmpty {
 			sql += " ORDER BY \(order)"
@@ -99,8 +168,8 @@ class SQLTable: NSObject {
 	/// Return an array of values for an `SQLTable` sub-class based on a passed in SQL query.
 	///
 	/// - Parameter sql: The SQL query to be used to fetch the data. This should be a valid (and complete) SQL query
-	/// - Returns: Returns an empty array if no matching rows were found. Otherwise, returns an array of `SQLTable` sub-class instances matching the criterias specified as per the SQL query passed in via the `sql` parameter.
-	class func rowsFor(sql:String="") -> [SQLTable] {
+	/// - Returns: Returns an empty array if no matching rows were found. Otherwise, returns an array of `SQLTable` sub-class instances matching the criterias specified as per the SQL query passed in via the `sql` parameter. Returns any matching row, even if they are marked for deletion, unless the provided SQL query specifically excluded deleted records.
+	class func rowsFor(sql: String = "") -> [SQLTable] {
 		var res = [SQLTable]()
 		let tmp = self.init()
 		let data = tmp.values()
@@ -123,8 +192,8 @@ class SQLTable: NSObject {
 	/// Return an instance of `SQLTable` sub-class for a given primary key value.
 	///
 	/// - Parameter id: The primary key value for the row of data you want to get.
-	/// - Returns: Return an instance of `SQLTable` sub-class if a matching row for the primary key was found, otherwise, returns nil.
-	class func rowBy(id:Any) -> SQLTable? {
+	/// - Returns: Return an instance of `SQLTable` sub-class if a matching row for the primary key was found, otherwise, returns nil. Returns any row, even if it is marked for deletion, as long as the provided ID matches.
+	class func rowBy(id: Any) -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
 		let db = SQLiteDB.shared
@@ -151,14 +220,22 @@ class SQLTable: NSObject {
 	///   - number: 1-based row number.
 	///   - filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be fetched.
 	///   - order: The optional sort order for the data. Specify the sort order as valid SQLite statements as they would appear in an ORDER BY caluse (but without the ORDER BY part). If this parameter is omitted, or a blank string is provided, the data will not be ordered and will be retrieved in the order it was entered into the database.
+	///   - type: The type of records to fetch. Defined via the `FetchType` enumerator and defaults to `nondeleted`.
 	/// - Returns: Return an instance of `SQLTable` sub-class if a matching row for the provided row number and filter criteria was found, otherwise, returns nil.
-	class func row(number:Int, filter:String="", order:String="") -> SQLTable? {
+	class func row(number: Int, filter: String = "", order: String = "", type: FetchType = .nondeleted) -> SQLTable? {
 		let row = self.init()
 		let data = row.values()
 		let db = SQLiteDB.shared
 		var sql = "SELECT * FROM \(table)"
-		if !filter.isEmpty {
-			sql += " WHERE \(filter)"
+		let wsql = SQLTable.whereFor(type: type)
+		if filter.isEmpty {
+			sql += wsql
+		} else {
+			if wsql.isEmpty {
+				sql += " WHERE \(filter)"
+			} else {
+				sql += wsql + " AND \(filter)"
+			}
 		}
 		if !order.isEmpty {
 			sql += " ORDER BY \(order)"
@@ -179,13 +256,22 @@ class SQLTable: NSObject {
 	
 	/// Return the count of rows in the table, or the count of rows matching a specific filter criteria, if one was provided.
 	///
-	/// - Parameter filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be fetched.
+	/// - Parameters:
+	///   - filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, the count of all rows, deleted rows, or non-deleted rows (depending on the `type` parameter) will be returned.
+	///   - type: The type of records to fetch. Defined via the `FetchType` enumerator and defaults to `nondeleted`.
 	/// - Returns: An integer value indicating the total number of rows, if no filter criteria was provided, or the number of rows matching the provided filter criteria.
-	class func count(filter:String="") -> Int {
+	class func count(filter: String = "", fetch: FetchType = .nondeleted) -> Int {
 		let db = SQLiteDB.shared
 		var sql = "SELECT COUNT(*) AS count FROM \(table)"
-		if !filter.isEmpty {
-			sql += " WHERE \(filter)"
+		let wsql = SQLTable.whereFor(type: fetch)
+		if filter.isEmpty {
+			sql += wsql
+		} else {
+			if wsql.isEmpty {
+				sql += " WHERE \(filter)"
+			} else {
+				sql += wsql + " AND \(filter)"
+			}
 		}
 		let arr = db.query(sql:sql)
 		if arr.count == 0 {
@@ -196,23 +282,40 @@ class SQLTable: NSObject {
 		}
 		return 0
 	}
-	
+
 	/// Remove all the rows in the underlying table, or just the rows matching a provided criteria.
 	///
-	/// - Parameter filter: The optional filter criteria to be used in removing data rows. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be deleted from the underlying table.
+	/// - Parameters:
+	///   - filter: The optional filter criteria to be used in removing data rows. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be deleted from the underlying table.
+	///   - force: Flag indicating whether to force delete the records or simply mark them as deleted. Defaluts to `false`.
 	/// - Returns: A boolean value indicating whether the row deletion was successful or not.
-	class func remove(filter:String = "") -> Bool {
+	class func remove(filter: String = "", force: Bool = false) -> Bool {
 		let db = SQLiteDB.shared
-		let sql:String
-		if filter.isEmpty {
-			// Delete all rows
+		var params: [Any]? = [true, Date()]
+		var sql = "UPDATE \(table) SET isDeleted = ?, modified = ?"
+		if force {
+			params = nil
 			sql = "DELETE FROM \(table)"
-		} else {
-			// Use filter to delete
-			sql = "DELETE FROM \(table) WHERE \(filter)"
 		}
-		let rc = db.execute(sql:sql)
+		if !filter.isEmpty {
+			// Use filter to delete
+			sql += " WHERE \(filter)"
+		}
+		let rc = db.execute(sql:sql, parameters: params)
 		return (rc != 0)
+	}
+	
+	/// Remove all records marked as deleted.
+	///
+	/// Parameter filter: The optional filter criteria to be used in removing data rows. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows marked as deleted will be removed from the underlying table.
+	class func clearTrash(filter: String = "") {
+		let db = SQLiteDB.shared
+		var sql = "DELETE FROM \(table) WHERE isDeleted"
+		if !filter.isEmpty {
+			// Use filter to delete
+			sql += " AND \(filter)"
+		}
+		_ = db.execute(sql:sql)
 	}
 	
 	/// Remove all rows from the underlying table to create an empty table.
@@ -225,9 +328,11 @@ class SQLTable: NSObject {
 	// MARK:- Public Methods
 	/// Save the current values for this particular `SQLTable` sub-class instance to the database.
 	///
+	/// - Parameters:
+	///   - updateCloud: A boolean indicating whether the save operation should save to the cloud as well. Defaults to `true`.
+	///   - dbOverride: A `DBType` indicating the database to save the remote data to. If set, this overrides the database set by default for the table via the `remoteDB` method. Defaults to `none`.
 	/// - Returns: An integer value indicating either the row id (in case of an insert) or the status of the save - a non-zero value indicates success and a 0 indicates failure.
-	func save() -> Int {
-		let db = SQLiteDB.shared
+	func save(updateCloud: Bool = true, dbOverride: DBType = .none) -> Int {
 		let key = primaryKey()
 		let data = values()
 		var insert = true
@@ -245,11 +350,16 @@ class SQLTable: NSObject {
 			}
 		}
 		// Insert or update
+		self.modified = Date()
 		let (sql, params) = getSQL(data:data, forInsert:insert)
 		let rc = db.execute(sql:sql, parameters:params)
 		if rc == 0 {
 			NSLog("Error saving record!")
 			return 0
+		}
+		// Do cloud update - check (as to whether to save to cloud is done by DB)
+		if updateCloud {
+			db.saveToCloud(row: self)
 		}
 		// Update primary key
 		let pid = data[key]
@@ -265,13 +375,19 @@ class SQLTable: NSObject {
 	
 	/// Delete the row for this particular `SQLTable` sub-class instance from the database.
 	///
+	/// - Parameter force: Flag indicating whether to force delete the records or simply mark them as deleted. Defaluts to `false`.
 	/// - Returns: A boolean value indicating the success or failure of the operation.
-	func delete() -> Bool {
+	func delete(force: Bool = false) -> Bool {
 		let key = primaryKey()
 		let data = values()
 		if let rid = data[key] {
-			let sql = "DELETE FROM \(table) WHERE \(primaryKey())=\(rid)"
-			let rc = db.execute(sql:sql)
+			var params: [Any]? = [true, Date()]
+			var sql = "UPDATE \(table) SET isDeleted = ?, modified = ? WHERE \(primaryKey())=\(rid)"
+			if force {
+				params = nil
+				sql = "DELETE FROM \(table) WHERE \(primaryKey())=\(rid)"
+			}
+			let rc = db.execute(sql:sql, parameters: params)
 			return (rc != 0)
 		}
 		return false
@@ -292,33 +408,80 @@ class SQLTable: NSObject {
 		}
 	}
 	
-	// MARK:- Private Methods
-//	private func properties() -> [String] {
-//		var res = [String]()
-//		for c in Mirror(reflecting:self).children {
-//			if let name = c.label{
-//				res.append(name)
-//			}
-//		}
-//		return res
-//	}
-	
+	// MARK:- Internal Methods
 	/// Fetch a dictionary of property names and their corresponding values that are supposed to be persisted to the underlying table. Any property names returned via the `ignoredKeys` method will be left out of the dictionary.
 	///
 	/// - Returns: A dictionary of property names and their corresponding values.
 	internal func values() -> [String:Any] {
 		var res = [String:Any]()
 		let obj = Mirror(reflecting:self)
+		processMirror(obj: obj, results: &res)
+		// Add super-class properties via recursion
+		getValues(obj: obj.superclassMirror, results: &res)
+		return res
+	}
+	
+	// MARK:- Private Methods
+	/// Recursively walk down the super-class hierarchy to get all the properties for a `SQLTable` sub-class instance
+	///
+	/// - Parameters:
+	///   - obj: The `Mirror` instance for the super-class.
+	///   - results: A dictionary of properties and values which will be modified in-place.
+	private func getValues(obj: Mirror?, results: inout [String:Any]) {
+		guard let obj = obj else { return }
+		processMirror(obj: obj, results: &results)
+		// Call method recursively
+		getValues(obj: obj.superclassMirror, results: &results)
+	}
+	
+	/// Creates a dictionary of property names and values based on a `Mirror` instance of an object.
+	///
+	/// - Parameters:
+	///   - obj: The `Mirror` instance to be used.
+	///   - results: A dictionary of properties and values which will be modified in-place.
+	private func processMirror(obj: Mirror, results: inout [String: Any]) {
 		for (_, attr) in obj.children.enumerated() {
 			if let name = attr.label {
+				// Ignore the table and db properties used internally
+				if name == "table" || name == "db" {
+					continue
+				}
 				// Ignore special properties and lazy vars
 				if ignoredKeys().contains(name) || name.hasSuffix(".storage") {
 					continue
 				}
-				res[name] = attr.value
+				results[name] = attr.value
 			}
 		}
-		return res
+	}
+	
+	/// Verify the structure of the underlying SQLite table and add any missing columns to the table as per the `SQLTable` sub-class definition.
+	private func verifyStructure() {
+		// Get table structure
+		var sql = "PRAGMA table_info(\(table));"
+		let arr = db.query(sql:sql)
+		// Extract column names
+		var columns = [String]()
+		for row in arr {
+			if let txt = row["name"] as? String {
+				columns.append(txt)
+			}
+		}
+		// Get SQLTable columns
+		let cols = values()
+		let names = cols.keys
+		// Validate the SQLTable columns exist in actual DB table
+		for nm in names {
+			if columns.contains(nm) {
+				continue
+			}
+			// Add missing column
+			if let val = cols[nm] {
+				let col = (key: nm, value:val)
+				sql = "ALTER TABLE \(table) ADD COLUMN " + getColumnSQL(column: col)
+				_ = db.execute(sql: sql)
+			}
+		}
 	}
 	
 	/// Returns a valid SQL statement and matching list of bound parameters needed to insert a new row into the database or to update an existing row of data.
@@ -385,39 +548,41 @@ class SQLTable: NSObject {
 	///
 	/// - Parameter columns: A dictionary of property names and their corresponding values for the `SQLTable` sub-class
 	/// - Returns: A string containing an SQL fragment for delcaring the columns for the underlying table with the correct data type 
-	private func getColumnSQL(columns:[String:Any]) -> String {
-		var sql = ""
-		for key in columns.keys {
-			let val = columns[key]!
-			var col = "'\(key)' "
-			if val is Int {
-				// Integers
-				col += "INTEGER"
-				if key == primaryKey() {
-					col += " PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE"
-				}
+	private func getColumnSQL(column:(key: String, value: Any)) -> String {
+		let key = column.key
+		let val = column.value
+		var sql = "'\(key)' "
+		if val is Int {
+			// Integers
+			sql += "INTEGER"
+			if key == primaryKey() {
+				sql += " PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE"
 			} else {
-				// Other values
-				if val is Float || val is Double {
-					col += "REAL"
-				} else if val is Bool {
-					col += "BOOLEAN"
-				} else if val is Date {
-					col += "DATE"
-				} else if val is NSData {
-					col += "BLOB"
-				} else {
-					// Default to text
-					col += "TEXT"
-				}
-				if key == primaryKey() {
-					col += " PRIMARY KEY NOT NULL UNIQUE"
-				}
+				sql += " DEFAULT \(val)"
 			}
-			if sql.isEmpty {
-				sql = col
+		} else {
+			// Other values
+			if val is Float || val is Double {
+				sql += "REAL DEFAULT \(val)"
+			} else if val is Bool {
+				sql += "BOOLEAN DEFAULT " + ((val as! Bool) ? "1" : "0")
+			} else if val is Date {
+				sql += "DATE"
+				// Cannot add a default when modifying a table, but can do so on new table creation
+//				if let dt = val as? Date {
+//					let now = Date()
+//					if now.timeIntervalSince(dt) < 3600 {
+//						sql += " DEFAULT current_timestamp"
+//					}
+//				}
+			} else if val is NSData {
+				sql += "BLOB"
 			} else {
-				sql += ", " + col
+				// Default to text
+				sql += "TEXT"
+			}
+			if key == primaryKey() {
+				sql += " PRIMARY KEY NOT NULL UNIQUE"
 			}
 		}
 		return sql

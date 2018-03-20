@@ -22,6 +22,7 @@
 		DD196CD71E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD196CD61E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift */; };
 		DD196CEC1E7B9EE200E19688 /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184C19D56BAF0053E68E /* SQLiteDB.swift */; };
 		DD196CEE1E7BA00E00E19688 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD196CED1E7BA00E00E19688 /* libsqlite3.tbd */; };
+		DD5ED6CB1E9CFF1C005E3ABA /* CloudDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5ED6CA1E9CFF1C005E3ABA /* CloudDB.swift */; };
 		DD7FFDBA1D23626C003EB06B /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB81D23626C003EB06B /* Category.swift */; };
 		DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB91D23626C003EB06B /* Task.swift */; };
 /* End PBXBuildFile section */
@@ -56,6 +57,7 @@
 		DD196CD81E7B9D1F00E19688 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DD196CED1E7BA00E00E19688 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		DD228C9319486E0400B74370 /* SQLiteDB-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SQLiteDB-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD5ED6CA1E9CFF1C005E3ABA /* CloudDB.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CloudDB.swift; path = ../../CloudDB.swift; sourceTree = "<group>"; };
 		DD7FFDB81D23626C003EB06B /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
 		DD7FFDB91D23626C003EB06B /* Task.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -156,6 +158,7 @@
 		DD61B8A91989AC0E00B5AAD2 /* SQLiteDB-Swift */ = {
 			isa = PBXGroup;
 			children = (
+				DD5ED6CA1E9CFF1C005E3ABA /* CloudDB.swift */,
 				DD18184C19D56BAF0053E68E /* SQLiteDB.swift */,
 				DD04B4781BEC367E008E1261 /* SQLTable.swift */,
 			);
@@ -219,19 +222,20 @@
 			attributes = {
 				LastSwiftMigration = 0710;
 				LastSwiftUpdateCheck = 0820;
-				LastUpgradeCheck = 0820;
+				LastUpgradeCheck = 0910;
 				ORGANIZATIONNAME = "RookSoft Pte. Ltd.";
 				TargetAttributes = {
 					DD196CD31E7B9D1E00E19688 = {
 						CreatedOnToolsVersion = 8.2.1;
 						DevelopmentTeam = FA2KHM6C4N;
+						LastSwiftMigration = 0910;
 						ProvisioningStyle = Automatic;
 						TestTargetID = DD228C9219486E0400B74370;
 					};
 					DD228C9219486E0400B74370 = {
 						CreatedOnToolsVersion = 6.0;
 						DevelopmentTeam = FA2KHM6C4N;
-						LastSwiftMigration = 0800;
+						LastSwiftMigration = 0910;
 						SystemCapabilities = {
 							com.apple.iCloud = {
 								enabled = 0;
@@ -297,6 +301,7 @@
 				DD18184919D56B5B0053E68E /* AppDelegate.swift in Sources */,
 				DD04B4791BEC367E008E1261 /* SQLTable.swift in Sources */,
 				DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */,
+				DD5ED6CB1E9CFF1C005E3ABA /* CloudDB.swift in Sources */,
 				DD18184B19D56B5B0053E68E /* TasksViewController.swift in Sources */,
 				DD18184719D56B5B0053E68E /* AddCategoryViewController.swift in Sources */,
 				DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */,
@@ -352,7 +357,8 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
+				SWIFT_VERSION = 4.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-iOS.app/SQLiteDB-iOS";
 			};
 			name = Debug;
@@ -374,7 +380,8 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
+				SWIFT_VERSION = 4.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SQLiteDB-iOS.app/SQLiteDB-iOS";
 			};
 			name = Release;
@@ -387,14 +394,20 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -434,14 +447,20 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -478,7 +497,8 @@
 				PRODUCT_NAME = "SQLiteDB-iOS";
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
+				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
 		};
@@ -496,7 +516,8 @@
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "Source/Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
+				SWIFT_VERSION = 4.0;
 			};
 			name = Release;
 		};
