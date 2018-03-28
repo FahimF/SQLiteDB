@@ -28,7 +28,7 @@ class SQLTable: NSObject {
 	/// Internal dictionary to keep track of whether a specific table was verfied to be in existence in the database. This dictionary is used to automatically create the table if it does not exist in the DB.
 	private static var verified = [String:Bool]()
 	/// Internal pointer to the main database
-	private var db = SQLiteDB.shared
+	internal var db = SQLiteDB.shared
 	
 	/// Static variable indicating the table name - used in class methods since the instance variable `table` is not accessible in class methods.
 	private static var table:String {

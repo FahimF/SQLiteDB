@@ -15,7 +15,7 @@ class AppDelegate:UIResponder, UIApplicationDelegate {
 	let db = SQLiteDB.shared
 
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
-		_ = db.openDB(copyFile:true)
+		_ = db.open(copyFile:true)
 		return true
 	}
 

@@ -9,28 +9,25 @@
 import XCTest
 
 class SQLiteDB_iOSTests: XCTestCase {
+	var db: SQLiteDB!
+	
     override func setUp() {
         super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+		db = SQLiteDB.shared
+		_ = db.open()
     }
     
     override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+		db.closeDB()
         super.tearDown()
     }
 	
 	// MARK:- Tests
-	func testDBOpen() {
-		let db = SQLiteDB.shared
-		XCTAssertNotNil(db, "Could not instantiate DB")
-	}
-	
 	func testQuery() {
 		_ = getCount()
 	}
 	
 	func testDBInsert() {
-		let db = SQLiteDB.shared
 		let prevCount = getCount()
 		let sql = "INSERT INTO Categories(name) VALUES (?)"
 		let result = db.execute(sql:sql, parameters:["John's Category"])
@@ -43,7 +40,6 @@ class SQLiteDB_iOSTests: XCTestCase {
 	
 	func testDBUpdate()  {
 		let lastID = getLastID()
-		let db = SQLiteDB.shared
 		var sql = "UPDATE Categories SET name = ? WHERE id = \(lastID)"
 		let newCat = "Jane's Category"
 		let result = db.execute(sql:sql, parameters:[newCat])
@@ -58,7 +54,6 @@ class SQLiteDB_iOSTests: XCTestCase {
 	
 	func testDBDelete() {
 		let lastID = getLastID()
-		let db = SQLiteDB.shared
 		let prevCount = getCount()
 		let sql = "DELETE FROM Categories WHERE id = \(lastID)"
 		let result = db.execute(sql:sql)
@@ -69,7 +64,6 @@ class SQLiteDB_iOSTests: XCTestCase {
 	
 	// MARK:- Helper Methods
 	func getCount() -> Int {
-		let db = SQLiteDB.shared
 		var count = 0
 		let sql = "SELECT COUNT(*) AS cnt FROM Categories"
 		let arr = db.query(sql:sql)
@@ -83,7 +77,6 @@ class SQLiteDB_iOSTests: XCTestCase {
 	
 	func getLastID() -> Int {
 		var lastID = 0
-		let db = SQLiteDB.shared
 		let sql = "SELECT * FROM Categories ORDER BY id DESC LIMIT 1"
 		let arr = db.query(sql:sql)
 		XCTAssertNotEqual(arr.count, 0, "The last ID query should have resulted in at least one row")

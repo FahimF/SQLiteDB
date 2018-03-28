@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		DD04B4791BEC367E008E1261 /* SQLTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4781BEC367E008E1261 /* SQLTable.swift */; };
 		DD04B4811BEC511B008E1261 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD04B47F1BEC511B008E1261 /* Launch Screen.storyboard */; };
+		DD1673B42069C64B00EE6AA4 /* SQLiteBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1673B32069C64B00EE6AA4 /* SQLiteBase.swift */; };
+		DD1673B52069C65B00EE6AA4 /* SQLiteBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1673B32069C64B00EE6AA4 /* SQLiteBase.swift */; };
 		DD18184219D56B5B0053E68E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD18183519D56B5B0053E68E /* Main.storyboard */; };
 		DD18184319D56B5B0053E68E /* data.db in Resources */ = {isa = PBXBuildFile; fileRef = DD18183719D56B5B0053E68E /* data.db */; };
 		DD18184419D56B5B0053E68E /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD18183819D56B5B0053E68E /* Images.xcassets */; };
@@ -23,6 +25,8 @@
 		DD196CEC1E7B9EE200E19688 /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18184C19D56BAF0053E68E /* SQLiteDB.swift */; };
 		DD196CEE1E7BA00E00E19688 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD196CED1E7BA00E00E19688 /* libsqlite3.tbd */; };
 		DD5ED6CB1E9CFF1C005E3ABA /* CloudDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5ED6CA1E9CFF1C005E3ABA /* CloudDB.swift */; };
+		DD7D4D66206B90F000EC21F4 /* CloudDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5ED6CA1E9CFF1C005E3ABA /* CloudDB.swift */; };
+		DD7D4D67206B910D00EC21F4 /* SQLTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04B4781BEC367E008E1261 /* SQLTable.swift */; };
 		DD7FFDBA1D23626C003EB06B /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB81D23626C003EB06B /* Category.swift */; };
 		DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FFDB91D23626C003EB06B /* Task.swift */; };
 /* End PBXBuildFile section */
@@ -40,6 +44,7 @@
 /* Begin PBXFileReference section */
 		DD04B4781BEC367E008E1261 /* SQLTable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLTable.swift; path = ../../SQLTable.swift; sourceTree = "<group>"; };
 		DD04B4801BEC511B008E1261 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = "Base.lproj/Launch Screen.storyboard"; sourceTree = "<group>"; };
+		DD1673B32069C64B00EE6AA4 /* SQLiteBase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLiteBase.swift; path = ../../SQLiteBase.swift; sourceTree = "<group>"; };
 		DD18183619D56B5B0053E68E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		DD18183719D56B5B0053E68E /* data.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = data.db; sourceTree = "<group>"; };
 		DD18183819D56B5B0053E68E /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -158,6 +163,7 @@
 		DD61B8A91989AC0E00B5AAD2 /* SQLiteDB-Swift */ = {
 			isa = PBXGroup;
 			children = (
+				DD1673B32069C64B00EE6AA4 /* SQLiteBase.swift */,
 				DD5ED6CA1E9CFF1C005E3ABA /* CloudDB.swift */,
 				DD18184C19D56BAF0053E68E /* SQLiteDB.swift */,
 				DD04B4781BEC367E008E1261 /* SQLTable.swift */,
@@ -290,7 +296,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				DD196CD71E7B9D1F00E19688 /* SQLiteDB_iOSTests.swift in Sources */,
+				DD7D4D66206B90F000EC21F4 /* CloudDB.swift in Sources */,
+				DD1673B52069C65B00EE6AA4 /* SQLiteBase.swift in Sources */,
 				DD196CEC1E7B9EE200E19688 /* SQLiteDB.swift in Sources */,
+				DD7D4D67206B910D00EC21F4 /* SQLTable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,6 +311,7 @@
 				DD04B4791BEC367E008E1261 /* SQLTable.swift in Sources */,
 				DD7FFDBB1D23626C003EB06B /* Task.swift in Sources */,
 				DD5ED6CB1E9CFF1C005E3ABA /* CloudDB.swift in Sources */,
+				DD1673B42069C64B00EE6AA4 /* SQLiteBase.swift in Sources */,
 				DD18184B19D56B5B0053E68E /* TasksViewController.swift in Sources */,
 				DD18184719D56B5B0053E68E /* AddCategoryViewController.swift in Sources */,
 				DD18184E19D56BAF0053E68E /* SQLiteDB.swift in Sources */,
@@ -430,7 +440,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				METAL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -476,7 +486,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				METAL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
