@@ -6,6 +6,8 @@ SQLiteDB also provides an `SQLTable` class which allows you to use SQLiteDB as a
 
 **Update: (28 Mar 2018)** The latest version of SQLiteDB changes the `openDB()` method to `open()`  and changes the parameters for the method as well. Please be aware of this change when updating an existing project. The `open` method parameters have default values which should work for most general cases - so you probably will not need to modify existing code except to change the method name.
 
+The `row(number:filter:order:type:)` method now takes 0-based row numbers instead of 1-based. This change was made to be in line with how the row number is used in all the use cases I've seen up to now.
+
 Also do not try to use the cloud database functionality available with the latest code since that is not yet ready for prime time - that code is still a work in progress. However, the rest of SQLiteDB code will function as it should without any issues. 
 
 ## Adding to Your Project
@@ -145,7 +147,7 @@ The save method returns a non-zero value if the save was successful. In the case
 * Get a `Category` by `id`:
 
 ```swift
-if let category = Category.rowBy(id:10) as? Category {
+if let category = Category.rowBy(id: 10) {
 	NSLog("Found category with ID = 10")
 }
 ```
@@ -153,13 +155,13 @@ if let category = Category.rowBy(id:10) as? Category {
 * Query the `Category` table:
 
 ```swift
-let array = Category.rows(filter:"id > 10") as! [Category]
+let array = Category.rows(filter: "id > 10")
 ```
 
-* Get a specific `Category` row (to display categories via a `UITableView`, for example):
+* Get a specific `Category` row (to display categories via a `UITableView`, for example) by row number. The row numbers start at 0, the same as `UITableView` row indexes:
 
 ```swift
-if let category = row(number:1) as? Category {
+if let category = row(number: 0) {
 	NSLog("Got first un-ordered category row")
 }
 ```
@@ -167,7 +169,7 @@ if let category = row(number:1) as? Category {
 * Delete a `Category`:
 
 ```swift
-if let category = Category.rowBy(id:10) as? Category {
+if let category = Category.rowBy(id: 10) {
 	category.delete()
 	NSLog("Deleted category with ID = 10")
 }
