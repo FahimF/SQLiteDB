@@ -18,15 +18,17 @@ class AddTaskViewController: UITableViewController {
 		}
 		// Validations
 		if txtTask.text!.isEmpty {
-			let alert = UIAlertView(title:"SQLiteDB", message:"Please add a task description first!", delegate:nil, cancelButtonTitle: "OK")
-			alert.show()
+			let alert = UIAlertController(title: "SQLiteDB", message: "Please add a task description first!", preferredStyle: UIAlertControllerStyle.alert)
+			alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+			present(alert, animated: true, completion: nil)
 		}
 		// Save task
 		let task = Task()
 		task.task = txtTask.text!
 		if task.save() != 0 {
-			let alert = UIAlertView(title:"SQLiteDB", message:"Task successfully saved!", delegate:nil, cancelButtonTitle: "OK")
-			alert.show()
+			let alert = UIAlertController(title: "SQLiteDB", message: "Task successfully saved!", preferredStyle: UIAlertControllerStyle.alert)
+			alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+			present(alert, animated: true, completion: nil)
 		}
 	}
 }

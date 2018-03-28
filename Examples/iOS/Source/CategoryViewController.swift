@@ -31,7 +31,7 @@ class CategoryViewController: UIViewController, UITableViewDelegate, UITableView
 	
 	func tableView(_ tv:UITableView, cellForRowAt indexPath:IndexPath) -> UITableViewCell {
 		let cell = tv.dequeueReusableCell(withIdentifier: "CategoryCell")!
-		if let cat = Category.row(number: indexPath.row, order: "name") as? Category {
+		if let cat = Category.row(number: indexPath.row, order: "name") {
 			cell.textLabel?.text = cat.name
 		}
 		return cell

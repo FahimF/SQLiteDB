@@ -13,10 +13,12 @@ enum FetchType: Int {
 	case all, deleted, nondeleted
 }
 
+protocol SQLTableProtocol {}
+
 // MARK:- SQLiteDB Class
 /// Base class for providing object-based access to SQLite tables. Simply define the properties and their default values (a value has to be there in order to determine value type) and SQLTable will handle the basic CRUD (creating, reading, updating, deleting) actions for you without any additional code.
 @objcMembers
-class SQLTable: NSObject {
+class SQLTable: NSObject, SQLTableProtocol {
 	/// Every SQLTable sub-class will contain an `isDeleted` flag. Instead of deleting records, you should set the flag to `true` for deletions and filter your data accordingly when fetching data from `SQLTable`. This flag will be used to synchronize deletions via CloudKit
 	public var isDeleted = false
 	/// Every SQLTable sub-class will contain a `created` property indicating the creation date of the record.
@@ -29,14 +31,6 @@ class SQLTable: NSObject {
 	private static var verified = [String:Bool]()
 	/// Internal pointer to the main database
 	internal var db = SQLiteDB.shared
-	
-	/// Static variable indicating the table name - used in class methods since the instance variable `table` is not accessible in class methods.
-	private static var table:String {
-		let cls = "\(classForCoder())".lowercased()
-		let ndx = cls.index(before:cls.endIndex)
-		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : (cls.hasSuffix("s") ? cls + "es" : cls + "s")
-		return tnm
-	}
 	
 	/// Base initialization which sets up the table name and then verifies that the table exists in the DB, and if it does not, creates it.
 	required override init() {
@@ -134,124 +128,6 @@ class SQLTable: NSObject {
 		case .nondeleted:
 			return " WHERE (NOT isDeleted OR isDeleted IS NULL)"
 		}
-	}
-	
-	/// Return an array of values for an `SQLTable` sub-class (optionally) matching specified filter criteria, (optionally) in a given column order, and (optionally) limited to a specific number of rows.
-	///
-	/// - Parameters:
-	///   - filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be fetched.
-	///   - order: The optional sort order for the data. Specify the sort order as valid SQLite statements as they would appear in an ORDER BY caluse (but without the ORDER BY part). If this parameter is omitted, or a blank string is provided, the data will not be ordered and will be retrieved in the order it was entered into the database.
-	///   - limit: The optional number of rows to fetch. If no value is provide or a 0 value is passed in, all rows will be fetched. Otherwise, up to "n" rows, where "n" is the number specified by the `limit` parameter, will be fetched depending on the other passed in parameters.
-	///   - type: The type of records to fetch. Defined via the `FetchType` enumerator and defaults to `nondeleted`.
-	/// - Returns: An array of `SQLTable` sub-class instances matching the criteria as specified in the `filter` and `limit` parameters orderd as per the `order` parameter.
-	class func rows(filter: String = "", order: String = "", limit: Int = 0, type: FetchType = .nondeleted) -> [SQLTable] {
-		var sql = "SELECT * FROM \(table)"
-		let wsql = SQLTable.whereFor(type: type)
-		if filter.isEmpty {
-			sql += wsql
-		} else {
-			if wsql.isEmpty {
-				sql += " WHERE \(filter)"
-			} else {
-				sql += wsql + " AND \(filter)"
-			}
-		}
-		if !order.isEmpty {
-			sql += " ORDER BY \(order)"
-		}
-		if limit > 0 {
-			sql += " LIMIT 0, \(limit)"
-		}
-		return self.rowsFor(sql:sql)
-	}
-
-	/// Return an array of values for an `SQLTable` sub-class based on a passed in SQL query.
-	///
-	/// - Parameter sql: The SQL query to be used to fetch the data. This should be a valid (and complete) SQL query
-	/// - Returns: Returns an empty array if no matching rows were found. Otherwise, returns an array of `SQLTable` sub-class instances matching the criterias specified as per the SQL query passed in via the `sql` parameter. Returns any matching row, even if they are marked for deletion, unless the provided SQL query specifically excluded deleted records.
-	class func rowsFor(sql: String = "") -> [SQLTable] {
-		var res = [SQLTable]()
-		let tmp = self.init()
-		let data = tmp.values()
-		let db = SQLiteDB.shared
-		let fsql = sql.isEmpty ? "SELECT * FROM \(table)" : sql
-		let arr = db.query(sql:fsql)
-		for row in arr {
-			let t = self.init()
-			for (key, _) in data {
-				if let val = row[key] {
-					t.setValue(val, forKey:key)
-				}
-			}
-			res.append(t)
-		}
-		return res
-		
-	}
-	
-	/// Return an instance of `SQLTable` sub-class for a given primary key value.
-	///
-	/// - Parameter id: The primary key value for the row of data you want to get.
-	/// - Returns: Return an instance of `SQLTable` sub-class if a matching row for the primary key was found, otherwise, returns nil. Returns any row, even if it is marked for deletion, as long as the provided ID matches.
-	class func rowBy(id: Any) -> SQLTable? {
-		let row = self.init()
-		let data = row.values()
-		let db = SQLiteDB.shared
-		var val = "\(id)"
-		if id is String {
-			val = "'\(id)'"
-		}
-		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(val)"
-		let arr = db.query(sql:sql)
-		if arr.count == 0 {
-			return nil
-		}
-		for (key, _) in data {
-			if let val = arr[0][key] {
-				row.setValue(val, forKey:key)
-			}
-		}
-		return row
-	}
-	
-	/// Return an instance of `SQLTable` sub-class for a given 1-based row number matching specific (optional) filtering and sorting criteria. Especially useful for fetching just one row to populate a `UITableView` as needed instead of populating a full array of data that you might (or might not) need.
-	///
-	/// - Parameters:
-	///   - number: 1-based row number.
-	///   - filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be fetched.
-	///   - order: The optional sort order for the data. Specify the sort order as valid SQLite statements as they would appear in an ORDER BY caluse (but without the ORDER BY part). If this parameter is omitted, or a blank string is provided, the data will not be ordered and will be retrieved in the order it was entered into the database.
-	///   - type: The type of records to fetch. Defined via the `FetchType` enumerator and defaults to `nondeleted`.
-	/// - Returns: Return an instance of `SQLTable` sub-class if a matching row for the provided row number and filter criteria was found, otherwise, returns nil.
-	class func row(number: Int, filter: String = "", order: String = "", type: FetchType = .nondeleted) -> SQLTable? {
-		let row = self.init()
-		let data = row.values()
-		let db = SQLiteDB.shared
-		var sql = "SELECT * FROM \(table)"
-		let wsql = SQLTable.whereFor(type: type)
-		if filter.isEmpty {
-			sql += wsql
-		} else {
-			if wsql.isEmpty {
-				sql += " WHERE \(filter)"
-			} else {
-				sql += wsql + " AND \(filter)"
-			}
-		}
-		if !order.isEmpty {
-			sql += " ORDER BY \(order)"
-		}
-		// Limit to specified row
-		sql += " LIMIT 1 OFFSET \(number-1)"
-		let arr = db.query(sql:sql)
-		if arr.count == 0 {
-			return nil
-		}
-		for (key, _) in data {
-			if let val = arr[0][key] {
-				row.setValue(val, forKey:key)
-			}
-		}
-		return row
 	}
 	
 	/// Return the count of rows in the table, or the count of rows matching a specific filter criteria, if one was provided.
@@ -588,3 +464,132 @@ class SQLTable: NSObject {
 		return sql
 	}
 }
+
+extension SQLTableProtocol where Self: SQLTable {
+	/// Static variable indicating the table name - used in class methods since the instance variable `table` is not accessible in class methods.
+	static var table:String {
+		let cls = "\(classForCoder())".lowercased()
+		let ndx = cls.index(before:cls.endIndex)
+		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : (cls.hasSuffix("s") ? cls + "es" : cls + "s")
+		return tnm
+	}
+
+	/// Return an array of values for an `SQLTable` sub-class (optionally) matching specified filter criteria, (optionally) in a given column order, and (optionally) limited to a specific number of rows.
+	///
+	/// - Parameters:
+	///   - filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be fetched.
+	///   - order: The optional sort order for the data. Specify the sort order as valid SQLite statements as they would appear in an ORDER BY caluse (but without the ORDER BY part). If this parameter is omitted, or a blank string is provided, the data will not be ordered and will be retrieved in the order it was entered into the database.
+	///   - limit: The optional number of rows to fetch. If no value is provide or a 0 value is passed in, all rows will be fetched. Otherwise, up to "n" rows, where "n" is the number specified by the `limit` parameter, will be fetched depending on the other passed in parameters.
+	///   - type: The type of records to fetch. Defined via the `FetchType` enumerator and defaults to `nondeleted`.
+	/// - Returns: An array of `SQLTable` sub-class instances matching the criteria as specified in the `filter` and `limit` parameters orderd as per the `order` parameter.
+	static func rows(filter: String = "", order: String = "", limit: Int = 0, type: FetchType = .nondeleted) -> [Self] {
+		var sql = "SELECT * FROM \(table)"
+		let wsql = SQLTable.whereFor(type: type)
+		if filter.isEmpty {
+			sql += wsql
+		} else {
+			if wsql.isEmpty {
+				sql += " WHERE \(filter)"
+			} else {
+				sql += wsql + " AND \(filter)"
+			}
+		}
+		if !order.isEmpty {
+			sql += " ORDER BY \(order)"
+		}
+		if limit > 0 {
+			sql += " LIMIT 0, \(limit)"
+		}
+		return self.rowsFor(sql:sql)
+	}
+	
+	/// Return an array of values for an `SQLTable` sub-class based on a passed in SQL query.
+	///
+	/// - Parameter sql: The SQL query to be used to fetch the data. This should be a valid (and complete) SQL query
+	/// - Returns: Returns an empty array if no matching rows were found. Otherwise, returns an array of `SQLTable` sub-class instances matching the criterias specified as per the SQL query passed in via the `sql` parameter. Returns any matching row, even if they are marked for deletion, unless the provided SQL query specifically excluded deleted records.
+	static func rowsFor(sql: String = "") -> [Self] {
+		var res = [Self]()
+		let tmp = self.init()
+		let data = tmp.values()
+		let db = SQLiteDB.shared
+		let fsql = sql.isEmpty ? "SELECT * FROM \(table)" : sql
+		let arr = db.query(sql:fsql)
+		for row in arr {
+			let t = self.init()
+			for (key, _) in data {
+				if let val = row[key] {
+					t.setValue(val, forKey:key)
+				}
+			}
+			res.append(t)
+		}
+		return res
+		
+	}
+	
+	/// Return an instance of `SQLTable` sub-class for a given primary key value.
+	///
+	/// - Parameter id: The primary key value for the row of data you want to get.
+	/// - Returns: Return an instance of `SQLTable` sub-class if a matching row for the primary key was found, otherwise, returns nil. Returns any row, even if it is marked for deletion, as long as the provided ID matches.
+	static func rowBy(id: Any) -> Self? {
+		let row = self.init()
+		let data = row.values()
+		let db = SQLiteDB.shared
+		var val = "\(id)"
+		if id is String {
+			val = "'\(id)'"
+		}
+		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(val)"
+		let arr = db.query(sql:sql)
+		if arr.count == 0 {
+			return nil
+		}
+		for (key, _) in data {
+			if let val = arr[0][key] {
+				row.setValue(val, forKey:key)
+			}
+		}
+		return row
+	}
+	
+	/// Return an instance of `SQLTable` sub-class for a given 0-based row number matching specific (optional) filtering and sorting criteria. Especially useful for fetching just one row to populate a `UITableView` as needed instead of populating a full array of data that you might (or might not) need.
+	///
+	/// - Parameters:
+	///   - number: 0-based row number, used mostly for accessing rows for display in UITableViews.
+	///   - filter: The optional filter criteria to be used in fetching the data. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows will be fetched.
+	///   - order: The optional sort order for the data. Specify the sort order as valid SQLite statements as they would appear in an ORDER BY caluse (but without the ORDER BY part). If this parameter is omitted, or a blank string is provided, the data will not be ordered and will be retrieved in the order it was entered into the database.
+	///   - type: The type of records to fetch. Defined via the `FetchType` enumerator and defaults to `nondeleted`.
+	/// - Returns: Return an instance of `SQLTable` sub-class if a matching row for the provided row number and filter criteria was found, otherwise, returns nil.
+	static func row(number: Int, filter: String = "", order: String = "", type: FetchType = .nondeleted) -> Self? {
+		let row = self.init()
+		let data = row.values()
+		let db = SQLiteDB.shared
+		var sql = "SELECT * FROM \(table)"
+		let wsql = SQLTable.whereFor(type: type)
+		if filter.isEmpty {
+			sql += wsql
+		} else {
+			if wsql.isEmpty {
+				sql += " WHERE \(filter)"
+			} else {
+				sql += wsql + " AND \(filter)"
+			}
+		}
+		if !order.isEmpty {
+			sql += " ORDER BY \(order)"
+		}
+		// Limit to specified row
+		sql += " LIMIT 1 OFFSET \(number)"
+		let arr = db.query(sql:sql)
+		if arr.count == 0 {
+			return nil
+		}
+		for (key, _) in data {
+			if let val = arr[0][key] {
+				row.setValue(val, forKey:key)
+			}
+		}
+		return row
+	}
+}
+

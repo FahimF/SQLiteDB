@@ -12,7 +12,7 @@
 	import AppKit
 #endif
 
-class Task:SQLTable {
+class Task: SQLTable {
 	var id = -1
 	var task = ""
 	var categoryID = -1

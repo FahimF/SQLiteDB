@@ -14,9 +14,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 	func applicationDidFinishLaunching(_ notification:Notification) {
 		// Open DB first
-		if db.openDB() {
+		if db.open() {
 			// Query category
-			let cats = Category.rows(order:"id ASC") as! [Category]
+			let cats = Category.rows(order:"id ASC")
 			NSLog("Got categories: \(cats)")
 		}
 	}

@@ -12,7 +12,7 @@
 	import AppKit
 #endif
 
-class Category:SQLTable {
+class Category: SQLTable {
 	var id = -1
 	var name = ""
 	

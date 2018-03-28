@@ -18,15 +18,17 @@ class AddCategoryViewController: UITableViewController {
 		}
 		// Validations
 		if txtCat.text!.isEmpty {
-			let alert = UIAlertView(title:"SQLiteDB", message:"Please add a category name first!", delegate:nil, cancelButtonTitle: "OK")
-			alert.show()
+			let alert = UIAlertController(title: "SQLiteDB", message: "Please add a category name first!", preferredStyle: UIAlertControllerStyle.alert)
+			alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+			present(alert, animated: true, completion: nil)
 		}
 		// Save task
 		let cat = Category()
 		cat.name = txtCat.text!
 		if cat.save() != 0 {
-			let alert = UIAlertView(title:"SQLiteDB", message:"Category successfully saved!", delegate:nil, cancelButtonTitle: "OK")
-			alert.show()
+			let alert = UIAlertController(title: "SQLiteDB", message: "Category successfully saved!", preferredStyle: UIAlertControllerStyle.alert)
+			alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+			present(alert, animated: true, completion: nil)
 		}
 	}
 }
