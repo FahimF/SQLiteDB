@@ -180,7 +180,7 @@ You can refer to the sample iOS and macOS projects for more examples of how to i
 ## Questions?
 
 * FAQ: [FAQs](https://github.com/FahimF/SQLiteDB/wiki/FAQs)
-* [IMG](https://www.codementor.io/fahimfarook?utm_source=github&utm_medium=button&utm_term=fahimfarook&utm_campaign=github)
+* [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/fahimfarook?utm_source=github&utm_medium=button&utm_term=fahimfarook&utm_campaign=github)
 * Web: [http://rooksoft.sg/](http://rooksoft.sg/)
 * Twitter: [http://twitter.com/FahimFarook](http://twitter.com/FahimFarook)
 
