@@ -389,7 +389,7 @@ class SQLiteBase: NSObject {
 	private func getColumnValue(index:CInt, type:CInt, stmt:OpaquePointer)->Any? {
 		// Integer
 		if type == SQLITE_INTEGER {
-			let val = sqlite3_column_int(stmt, index)
+			let val = sqlite3_column_int64(stmt, index)
 			return Int(val)
 		}
 		// Float
