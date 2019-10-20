@@ -18,6 +18,8 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.sel
 /// Simple wrapper class to provide basic SQLite database access as a non-singleton
 @objc(SQLiteBase)
 class SQLiteBase: NSObject {
+	/// The SQLite database file name - defaults to `data.db`.
+	var DB_NAME = "data.db"
 	/// Internal name for GCD queue used to execute SQL commands so that all commands are executed sequentially
 	private let QUEUE_LABEL = "SQLiteDB"
 	/// The internal GCD queue
@@ -49,10 +51,12 @@ class SQLiteBase: NSObject {
 	}
 	
 	// MARK: - Public Methods
-	
 	/// Open the database specified by the `DB_NAME` variable and assigns the internal DB references. If a database is currently open, the method first closes the current database and gets a new DB references to the current database pointed to by `DB_NAME`
 	///
-	/// - Parameter copyFile: Whether to copy the file named in `DB_NAME` from resources or to create a new empty database file. Defaults to `true`
+	/// - Parameters:
+	/// 	- dbPath: Location of the DB file to be opened
+	/// 	- copyFile: Whether to copy the file at `dbPath` to the standard disk location or to create a new empty database file. Defaults to `false`
+	/// 	- inMemory: Whether to create an in-memory DB or a disk-based DB
 	/// - Returns: Returns a boolean value indicating if the database was successfully opened or not.
 	func open(dbPath: String, copyFile: Bool = false, inMemory: Bool = false) -> Bool {
 		if db != nil {
@@ -64,14 +68,24 @@ class SQLiteBase: NSObject {
 			let url = URL(fileURLWithPath: dbPath)
 			// Set up for file operations
 			let fm = FileManager.default
-			var dest = url
-			// Set up destination path to DB in Documents directory - if copying
-			if copyFile {
-				guard var libDir = fm.urls(for: FileManager.SearchPathDirectory.libraryDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first else { return false }
-// If macOS, add app name to path since otherwise, DB could possibly interfere with another app using SQLiteDB
 #if os(OSX)
-				let info = Bundle.main.infoDictionary!
-				let appName = info["CFBundleName"] as! String
+			let info = Bundle.main.infoDictionary!
+			let appName = info["CFBundleName"] as! String
+#endif
+			var dest = url
+			// Set up destination path to DB in Library folder - if copying
+			if copyFile {
+				// Old DB location
+				guard var docDir = fm.urls(for: FileManager.SearchPathDirectory.documentDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first else { return false }
+// If macOS, add app name to path
+#if os(OSX)
+				docDir = docDir.appendingPathComponent(appName)
+#endif
+				let oldSrc = docDir.appendingPathComponent(DB_NAME)
+				// New destination
+				guard var libDir = fm.urls(for: FileManager.SearchPathDirectory.libraryDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first else { return false }
+// If macOS, add app name to path
+#if os(OSX)
 				libDir = libDir.appendingPathComponent(appName)
 				// Create folder if it does not exist
 				if !fm.fileExists(atPath: libDir.path) {
@@ -85,21 +99,32 @@ class SQLiteBase: NSObject {
 #endif
 				let fn = url.lastPathComponent
 				dest = libDir.appendingPathComponent(fn)
-				// Check if DB is there in Documents directory
-				if !fm.fileExists(atPath: dest.path), copyFile {
-					// The database does not exist, so copy it
+				// If file exists at old location, just move it over
+				if fm.fileExists(atPath: oldSrc.path) {
 					do {
-						try fm.copyItem(at: url, to: dest)
+						try fm.moveItem(at: oldSrc, to: dest)
 					} catch {
-						assert(false, "SQLiteDB: Failed to copy writable version of DB! Error - \(error.localizedDescription)")
+						assert(false, "SQLiteDB: Failed to move existing DB from Documents! Error - \(error)")
 						return false
+					}
+				} else {
+					// Copy file from dbPath to destination, if it doesn't exist at destination
+					// Check if DB is there in Library folder
+					if !fm.fileExists(atPath: dest.path) {
+						// The database does not exist, so copy it
+						do {
+							try fm.copyItem(at: url, to: dest)
+						} catch {
+							assert(false, "SQLiteDB: Failed to copy writable version of DB! Error - \(error)")
+							return false
+						}
 					}
 				}
 			}
 			path = dest.path
 		}
 		// Open the DB
-		NSLog("SQLiteDB Opening DB at: \(path)")
+		NSLog("SQLiteDB Opening DB at: \(path ?? "no path")")
 		let cpath = path.cString(using: String.Encoding.utf8)
 		let error = sqlite3_open(cpath!, &db)
 		if error != SQLITE_OK {
