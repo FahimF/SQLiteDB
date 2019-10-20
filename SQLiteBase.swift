@@ -54,48 +54,53 @@ class SQLiteBase: NSObject {
 	///
 	/// - Parameter copyFile: Whether to copy the file named in `DB_NAME` from resources or to create a new empty database file. Defaults to `true`
 	/// - Returns: Returns a boolean value indicating if the database was successfully opened or not.
-	func open(dbPath: String, copyFile:Bool = false) -> Bool {
+	func open(dbPath: String, copyFile: Bool = false, inMemory: Bool = false) -> Bool {
 		if db != nil {
 			closeDB()
 		}
-		let url = URL(fileURLWithPath: dbPath)
-		// Set up for file operations
-		let fm = FileManager.default
-		var dest = url
-		// Set up destination path to DB in Documents directory - if copying
-		if copyFile {
-			guard var docDir = fm.urls(for: FileManager.SearchPathDirectory.documentDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first else { return false }
-			// If macOS, add app name to path since otherwise, DB could possibly interfere with another app using SQLiteDB
-			#if os(OSX)
+		if inMemory {
+			path = ":memory:"
+		} else {
+			let url = URL(fileURLWithPath: dbPath)
+			// Set up for file operations
+			let fm = FileManager.default
+			var dest = url
+			// Set up destination path to DB in Documents directory - if copying
+			if copyFile {
+				guard var libDir = fm.urls(for: FileManager.SearchPathDirectory.libraryDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first else { return false }
+// If macOS, add app name to path since otherwise, DB could possibly interfere with another app using SQLiteDB
+#if os(OSX)
 				let info = Bundle.main.infoDictionary!
 				let appName = info["CFBundleName"] as! String
-				docDir = docDir.appendingPathComponent(appName)
+				libDir = libDir.appendingPathComponent(appName)
 				// Create folder if it does not exist
-				if !fm.fileExists(atPath: docDir.path) {
+				if !fm.fileExists(atPath: libDir.path) {
 					do {
-						try fm.createDirectory(at: docDir, withIntermediateDirectories: true, attributes: nil)
+						try fm.createDirectory(at: libDir, withIntermediateDirectories: true, attributes: nil)
 					} catch {
-						assert(false, "SQLiteDB: Error creating DB directory: \(docDir) on macOS")
+						assert(false, "SQLiteDB: Error creating DB directory: \(libDir) on macOS")
 						return false
 					}
 				}
-			#endif
-			let fn = url.lastPathComponent
-			dest = docDir.appendingPathComponent(fn)
-			// Check if DB is there in Documents directory
-			if !(fm.fileExists(atPath: dest.path)) && copyFile {
-				// The database does not exist, so copy it
-				do {
-					try fm.copyItem(at: url, to: dest)
-				} catch let error {
-					assert(false, "SQLiteDB: Failed to copy writable version of DB! Error - \(error.localizedDescription)")
-					return false
+#endif
+				let fn = url.lastPathComponent
+				dest = libDir.appendingPathComponent(fn)
+				// Check if DB is there in Documents directory
+				if !fm.fileExists(atPath: dest.path), copyFile {
+					// The database does not exist, so copy it
+					do {
+						try fm.copyItem(at: url, to: dest)
+					} catch {
+						assert(false, "SQLiteDB: Failed to copy writable version of DB! Error - \(error.localizedDescription)")
+						return false
+					}
 				}
 			}
+			path = dest.path
 		}
 		// Open the DB
-		path = dest.path
-		let cpath = path.cString(using:String.Encoding.utf8)
+		NSLog("SQLiteDB Opening DB at: \(path)")
+		let cpath = path.cString(using: String.Encoding.utf8)
 		let error = sqlite3_open(cpath!, &db)
 		if error != SQLITE_OK {
 			// Open failed, close DB and fail
