@@ -144,16 +144,16 @@ class CloudDB: NSObject {
 	/// Get the CloudKit record ID for the passed in SQLTable sub-class. The method creates a record ID if there's a valid record ID. If not, it returns `nil`.
 	///   - row: The SQLTable instance to be deleted remotely.
 	///   - type: The database type - should be one of `.public`, `.private`, or `.shared`.
-	private func recordIDFor(row: SQLTable, type: DBType) -> CKRecordID? {
+	private func recordIDFor(row: SQLTable, type: DBType) -> CKRecord.ID? {
 		let data = row.values()
 		// Set up remote ID
 		let idName = row.remoteKey()
 		if let sid = data[idName] as? String, !sid.isEmpty {
 			if type == .privateDB {
-				let zone = CKRecordZoneID(zoneName: row.table, ownerName: CKCurrentUserDefaultName)
-				return CKRecordID(recordName: sid, zoneID: zone)
+				let zone = CKRecordZone.ID(zoneName: row.table, ownerName: CKCurrentUserDefaultName)
+				return CKRecord.ID(recordName: sid, zoneID: zone)
 			} else {
-				return CKRecordID(recordName: sid)
+				return CKRecord.ID(recordName: sid)
 			}
 		}
 		return nil
@@ -162,7 +162,7 @@ class CloudDB: NSObject {
 	/// Get the CloudKit record for the passed in SQLTable sub-class. The method creates a new CKRecord instance containing the data from the `SQLTable` sub-class.
 	///   - row: The SQLTable instance to be deleted remotely.
 	///   - type: The database type - should be one of `.public`, `.private`, or `.shared`.
-	private func recordFor(recordID: CKRecordID?, row: SQLTable, type: DBType) -> CKRecord {
+	private func recordFor(recordID: CKRecord.ID?, row: SQLTable, type: DBType) -> CKRecord {
 		let data = row.values()
 		let idName = row.remoteKey()
 		let record: CKRecord
@@ -170,8 +170,10 @@ class CloudDB: NSObject {
 			record = CKRecord(recordType: row.table, recordID: ckid)
 		} else {
 			if type == .privateDB {
-				let zone = CKRecordZoneID(zoneName: row.table, ownerName: CKCurrentUserDefaultName)
-				record = CKRecord(recordType: row.table, zoneID: zone)
+//				let zone = CKRecordZone.ID(zoneName: row.table, ownerName: CKCurrentUserDefaultName)
+//				let ckid = CKRecord.ID(recordName: "", zoneID: zone)
+//				record = CKRecord(recordType: row.table, recordID: ckid)
+				record = CKRecord(recordType: row.table)
 			} else {
 				record = CKRecord(recordType: row.table)
 			}

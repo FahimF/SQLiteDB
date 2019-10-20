@@ -83,6 +83,13 @@ class SQLTable: NSObject, SQLTableProtocol {
 		}
 	}
 	
+	// MARK:- NSCoding / NSCopying Support
+	func copy(to: SQLTable) {
+		to.created = created
+		to.modified = modified
+		to.isDeleted = isDeleted
+	}
+	
 	// MARK:- Table property management
 	/// The primary key for the table - defaults to `id`. Override this in `SQLTable` sub-classes to define a different column name as the primary key.
 	///
@@ -320,6 +327,10 @@ class SQLTable: NSObject, SQLTableProtocol {
 			if let name = attr.label {
 				// Ignore the table and db properties used internally
 				if name == "table" || name == "db" {
+					continue
+				}
+				// Ignore lazy vars
+				if name.hasPrefix("$__lazy_storage_$_") {
 					continue
 				}
 				// Ignore special properties and lazy vars

@@ -34,7 +34,7 @@ class SQLiteDB: SQLiteBase {
 	
 	/// Output the current SQLite database path
 	override var description:String {
-		return "SQLiteDB: \(path)"
+		return "SQLiteDB: \(path ?? "")"
 	}
 	
 	// MARK:- Public Methods
@@ -42,15 +42,19 @@ class SQLiteDB: SQLiteBase {
 	///
 	/// - Parameter copyFile: Whether to copy the file named in `DB_NAME` from resources or to create a new empty database file. Defaults to `true`
 	/// - Returns: Returns a boolean value indicating if the database was successfully opened or not.
-	override func open(dbPath: String = "", copyFile: Bool = true) -> Bool {
-		var dbURL: URL
-		if dbPath.isEmpty {
-			guard let url = Bundle.main.resourceURL else { return false }
-			dbURL = url.appendingPathComponent(DB_NAME)
-		} else {
-			dbURL = URL(fileURLWithPath: dbPath)
+	override func open(dbPath: String = "", copyFile: Bool = true, inMemory: Bool = false) -> Bool {
+		NSLog("DB Open called with path: \(dbPath)")
+		var path = ""
+		if !inMemory {
+			if dbPath.isEmpty {
+				guard let url = Bundle.main.resourceURL else { return false }
+				path = url.appendingPathComponent(DB_NAME).path
+			} else {
+				path = URL(fileURLWithPath: dbPath).path
+			}
 		}
-		return super.open(dbPath: dbURL.path, copyFile: copyFile)
+		NSLog("Calling Super Open with path: \(path)")
+		return super.open(dbPath: path, copyFile: copyFile, inMemory: inMemory)
 	}
 	
 	/// Close the currently open SQLite database. Before closing the DB, the framework automatically takes care of optimizing the DB at frequent intervals by running the following commands:
