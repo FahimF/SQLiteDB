@@ -9,6 +9,7 @@
 import Foundation
 
 /// Enumerator to be used in fetching data via some methods where you might need to specify whether you want all records, only records marked for deletion, or only records not marked for deletion.
+@objc
 enum FetchType: Int {
 	case all, deleted, nondeleted
 }
@@ -408,7 +409,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 			}
 			// Set up parameter array - if we get here, then there are parameters
 			if first && params == nil {
-				params = [AnyObject]()
+				params = [Any]()
 			}
 			if forInsert {
 				sql += first ? "\(key)" : ", \(key)"

@@ -8,6 +8,7 @@
 
 import CloudKit
 
+@objc
 enum DBType: Int {
 	case none, publicDB, privateDB, sharedDB
 }
