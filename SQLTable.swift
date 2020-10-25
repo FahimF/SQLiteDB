@@ -16,7 +16,7 @@ enum FetchType: Int {
 
 protocol SQLTableProtocol {}
 
-// MARK:- SQLiteDB Class
+// MARK: - SQLiteDB Class
 /// Base class for providing object-based access to SQLite tables. Simply define the properties and their default values (a value has to be there in order to determine value type) and SQLTable will handle the basic CRUD (creating, reading, updating, deleting) actions for you without any additional code.
 @objcMembers
 class SQLTable: NSObject, SQLTableProtocol {
@@ -29,12 +29,12 @@ class SQLTable: NSObject, SQLTableProtocol {
 	/// Internal reference to the SQLite table name as determined based on the name of the `SQLTable` sub-class name. The sub-class name should be in the singular - for example, Task for a tasks table.
 	internal var table = ""
 	/// Internal dictionary to keep track of whether a specific table was verfied to be in existence in the database. This dictionary is used to automatically create the table if it does not exist in the DB.
-	private static var verified = [String:Bool]()
+	private static var verified = [String: Bool]()
 	/// Internal pointer to the main database
 	internal var db = SQLiteDB.shared
-	
+
 	/// Base initialization which sets up the table name and then verifies that the table exists in the DB, and if it does not, creates it.
-	required override init() {
+	override required init() {
 		super.init()
 		// Table name
 		self.table = type(of: self).table
@@ -42,7 +42,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 		if verified == nil || !verified! {
 			// Verify that the table exists in DB
 			var sql = "SELECT name FROM sqlite_master WHERE type='table' AND lower(name)='\(table)'"
-			let cnt = db.query(sql:sql).count
+			let cnt = db.query(sql: sql).count
 			if cnt == 1 {
 				// Table exists, verify strutcure and then proceed
 				verifyStructure()
@@ -56,14 +56,14 @@ class SQLTable: NSObject, SQLTableProtocol {
 				for col in cols {
 					if first {
 						first = false
-						sql += getColumnSQL(column:col)
+						sql += getColumnSQL(column: col)
 					} else {
 						sql += ", " + getColumnSQL(column: col)
 					}
 				}
 				// Close query
 				sql += ")"
-				let rc = db.execute(sql:sql)
+				let rc = db.execute(sql: sql)
 				if rc == 0 {
 					assert(false, "Error creating table - \(table) with SQL: \(sql)")
 				}
@@ -83,44 +83,44 @@ class SQLTable: NSObject, SQLTableProtocol {
 			}
 		}
 	}
-	
-	// MARK:- NSCoding / NSCopying Support
+
+	// MARK: - NSCoding / NSCopying Support
 	func copy(to: SQLTable) {
 		to.created = created
 		to.modified = modified
 		to.isDeleted = isDeleted
 	}
-	
-	// MARK:- Table property management
+
+	// MARK: - Table property management
 	/// The primary key for the table - defaults to `id`. Override this in `SQLTable` sub-classes to define a different column name as the primary key.
 	///
 	/// - Returns: A string indicating the name of the primary key column for the table. Defaults to `id`.
 	func primaryKey() -> String {
-		return "id"
+		"id"
 	}
-	
+
 	/// The remote key for the table for data saved to CloudKit - defaults to `ckid`. Override this in `SQLTable` sub-classes to define a different column name as the remote key.
 	///
 	/// - Returns: A string indicating the name of the remote key column for the table. Defaults to `ckid`.
 	func remoteKey() -> String {
-		return "ckid"
+		"ckid"
 	}
-	
+
 	/// The remote database for the table for data saved to CloudKit - defaults to `private`. Override this in `SQLTable` sub-classes to define a different database for a specific table.
 	///
 	/// - Returns: A `DBType` enum indicating the remote database for the table. Defaults to `private`.
 	func remoteDB() -> DBType {
-		return DBType.privateDB
+		DBType.privateDB
 	}
-	
+
 	/// An array of property names (in a sub-classed instance of `SQLTable`) that are to be ignored when fetching/saving information to the DB. Override this method in sub-classes when you have properties that you don't want persisted to the database.
 	///
 	/// - Returns: An array of String values indicating property/value names to be ignored when persisting data to the database.
 	func ignoredKeys() -> [String] {
-		return []
+		[]
 	}
-	
-	// MARK:- Class Methods
+
+	// MARK: - Class Methods
 	/// Returns a WHERE clause, or an empty string, depending on the passed in `FetchType`.
 	///
 	/// - Paramter type: The type of fetch operation to be performed.
@@ -129,15 +129,15 @@ class SQLTable: NSObject, SQLTableProtocol {
 		switch type {
 		case .all:
 			return ""
-			
+
 		case .deleted:
 			return " WHERE isDeleted"
-			
+
 		case .nondeleted:
 			return " WHERE (NOT isDeleted OR isDeleted IS NULL)"
 		}
 	}
-	
+
 	/// Return the count of rows in the table, or the count of rows matching a specific filter criteria, if one was provided.
 	///
 	/// - Parameters:
@@ -157,7 +157,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 				sql += wsql + " AND \(filter)"
 			}
 		}
-		let arr = db.query(sql:sql)
+		let arr = db.query(sql: sql)
 		if arr.count == 0 {
 			return 0
 		}
@@ -185,10 +185,10 @@ class SQLTable: NSObject, SQLTableProtocol {
 			// Use filter to delete
 			sql += " WHERE \(filter)"
 		}
-		let rc = db.execute(sql:sql, parameters: params)
+		let rc = db.execute(sql: sql, parameters: params)
 		return (rc != 0)
 	}
-	
+
 	/// Remove all records marked as deleted.
 	///
 	/// Parameter filter: The optional filter criteria to be used in removing data rows. Specify the filter criteria in the form of a valid SQLite WHERE clause (but without the actual WHERE keyword). If this parameter is omitted or a blank string is provided, all rows marked as deleted will be removed from the underlying table.
@@ -199,17 +199,17 @@ class SQLTable: NSObject, SQLTableProtocol {
 			// Use filter to delete
 			sql += " AND \(filter)"
 		}
-		_ = db.execute(sql:sql)
+		_ = db.execute(sql: sql)
 	}
-	
+
 	/// Remove all rows from the underlying table to create an empty table.
 	class func zap() {
 		let db = SQLiteDB.shared
 		let sql = "DELETE FROM \(table)"
-		_ = db.execute(sql:sql)
+		_ = db.execute(sql: sql)
 	}
-	
-	// MARK:- Public Methods
+
+	// MARK: - Public Methods
 	/// Save the current values for this particular `SQLTable` sub-class instance to the database.
 	///
 	/// - Parameters:
@@ -226,7 +226,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 				val = "'\(rid)'"
 			}
 			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(val)"
-			let arr = db.query(sql:sql)
+			let arr = db.query(sql: sql)
 			if arr.count == 1 {
 				if let cnt = arr[0]["count"] as? Int {
 					insert = (cnt == 0)
@@ -234,9 +234,9 @@ class SQLTable: NSObject, SQLTableProtocol {
 			}
 		}
 		// Insert or update
-		self.modified = Date()
-		let (sql, params) = getSQL(data:data, forInsert:insert)
-		let rc = db.execute(sql:sql, parameters:params)
+		modified = Date()
+		let (sql, params) = getSQL(data: data, forInsert: insert)
+		let rc = db.execute(sql: sql, parameters: params)
 		if rc == 0 {
 			NSLog("Error saving record!")
 			return 0
@@ -249,14 +249,14 @@ class SQLTable: NSObject, SQLTableProtocol {
 		let pid = data[key]
 		if insert {
 			if pid is Int64 {
-				setValue(rc, forKey:key)
+				setValue(rc, forKey: key)
 			} else if pid is Int {
-				setValue(Int(rc), forKey:key)
+				setValue(Int(rc), forKey: key)
 			}
 		}
 		return rc
 	}
-	
+
 	/// Delete the row for this particular `SQLTable` sub-class instance from the database.
 	///
 	/// - Parameter force: Flag indicating whether to force delete the records or simply mark them as deleted. Defaluts to `false`.
@@ -271,53 +271,53 @@ class SQLTable: NSObject, SQLTableProtocol {
 				params = nil
 				sql = "DELETE FROM \(table) WHERE \(primaryKey())=\(rid)"
 			}
-			let rc = db.execute(sql:sql, parameters: params)
+			let rc = db.execute(sql: sql, parameters: params)
 			return (rc != 0)
 		}
 		return false
 	}
-	
+
 	/// Update the data for this particular `SQLTable` sub-class instance from the database so that all values are updated with the latest values from the database.
 	func refresh() {
 		let key = primaryKey()
 		let data = values()
 		if let rid = data[key] {
 			let sql = "SELECT * FROM \(table) WHERE \(primaryKey())=\(rid)"
-			let arr = db.query(sql:sql)
+			let arr = db.query(sql: sql)
 			for (key, _) in data {
 				if let val = arr[0][key] {
-					setValue(val, forKey:key)
+					setValue(val, forKey: key)
 				}
 			}
 		}
 	}
-	
-	// MARK:- Internal Methods
+
+	// MARK: - Internal Methods
 	/// Fetch a dictionary of property names and their corresponding values that are supposed to be persisted to the underlying table. Any property names returned via the `ignoredKeys` method will be left out of the dictionary.
 	///
 	/// - Returns: A dictionary of property names and their corresponding values.
-	internal func values() -> [String:Any] {
-		var res = [String:Any]()
-		let obj = Mirror(reflecting:self)
+	internal func values() -> [String: Any] {
+		var res = [String: Any]()
+		let obj = Mirror(reflecting: self)
 		processMirror(obj: obj, results: &res)
 		// Add super-class properties via recursion
 		getValues(obj: obj.superclassMirror, results: &res)
 		return res
 	}
-	
-	// MARK:- Private Methods
+
+	// MARK: - Private Methods
 	/// Recursively walk down the super-class hierarchy to get all the properties for a `SQLTable` sub-class instance
 	///
 	/// - Parameters:
 	///   - obj: The `Mirror` instance for the super-class.
 	///   - results: A dictionary of properties and values which will be modified in-place.
-	private func getValues(obj: Mirror?, results: inout [String:Any]) {
+	private func getValues(obj: Mirror?, results: inout [String: Any]) {
 		guard let obj = obj else { return }
 		processMirror(obj: obj, results: &results)
 		// Call method recursively
 		getValues(obj: obj.superclassMirror, results: &results)
 	}
-	
+
 	/// Creates a dictionary of property names and values based on a `Mirror` instance of an object.
 	///
 	/// - Parameters:
@@ -342,12 +342,12 @@ class SQLTable: NSObject, SQLTableProtocol {
 			}
 		}
 	}
-	
+
 	/// Verify the structure of the underlying SQLite table and add any missing columns to the table as per the `SQLTable` sub-class definition.
 	private func verifyStructure() {
 		// Get table structure
 		var sql = "PRAGMA table_info(\(table));"
-		let arr = db.query(sql:sql)
+		let arr = db.query(sql: sql)
 		// Extract column names
 		var columns = [String]()
 		for row in arr {
@@ -365,22 +365,22 @@ class SQLTable: NSObject, SQLTableProtocol {
 			}
 			// Add missing column
 			if let val = cols[nm] {
-				let col = (key: nm, value:val)
+				let col = (key: nm, value: val)
 				sql = "ALTER TABLE \(table) ADD COLUMN " + getColumnSQL(column: col)
 				_ = db.execute(sql: sql)
 			}
 		}
 	}
-	
+
 	/// Returns a valid SQL statement and matching list of bound parameters needed to insert a new row into the database or to update an existing row of data.
 	///
 	/// - Parameters:
 	///   - data: A dictionary of property names and their corresponding values that need to be persisted to the underlying table.
 	///   - forInsert: A boolean value indicating whether this is an insert or update action.
 	/// - Returns: A tuple containing a valid SQL command to persist data to the underlying table and the bound parameters for the SQL command, if any.
-	private func getSQL(data:[String:Any], forInsert:Bool = true) -> (String, [Any]?) {
+	private func getSQL(data: [String: Any], forInsert: Bool = true) -> (String, [Any]?) {
 		var sql = ""
-		var params:[Any]? = nil
+		var params: [Any]?
 		if forInsert {
 			// INSERT INTO tasks(task, categoryID) VALUES ('\(txtTask.text)', 1)
 			sql = "INSERT INTO \(table)("
@@ -390,13 +390,13 @@ class SQLTable: NSObject, SQLTableProtocol {
 		}
 		let pkey = primaryKey()
 		var wsql = ""
-		var rid:Any?
+		var rid: Any?
 		var first = true
 		for (key, val) in data {
 			// Primary key handling
 			if pkey == key {
 				if forInsert {
-					if val is Int && (val as! Int) == -1 {
+					if val is Int, (val as! Int) == -1 {
 						// Do not add this since this is (could be?) an auto-increment value
 						continue
 					}
@@ -408,7 +408,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 				}
 			}
 			// Set up parameter array - if we get here, then there are parameters
-			if first && params == nil {
+			if first, params == nil {
 				params = [Any]()
 			}
 			if forInsert {
@@ -424,19 +424,19 @@ class SQLTable: NSObject, SQLTableProtocol {
 		// Finalize SQL
 		if forInsert {
 			sql += ")" + wsql + ")"
-		} else if params != nil && !wsql.isEmpty {
+		} else if params != nil, !wsql.isEmpty {
 			sql += wsql
 			params!.append(rid!)
 		}
 //		NSLog("Final SQL: \(sql) with parameters: \(params)")
 		return (sql, params)
 	}
-	
+
 	/// Returns a valid SQL fragment for creating the columns, with the correct data type, for the underlying table.
 	///
 	/// - Parameter columns: A dictionary of property names and their corresponding values for the `SQLTable` sub-class
-	/// - Returns: A string containing an SQL fragment for delcaring the columns for the underlying table with the correct data type 
-	private func getColumnSQL(column:(key: String, value: Any)) -> String {
+	/// - Returns: A string containing an SQL fragment for delcaring the columns for the underlying table with the correct data type
+	private func getColumnSQL(column: (key: String, value: Any)) -> String {
 		let key = column.key
 		let val = column.value
 		var sql = "'\(key)' "
@@ -479,9 +479,9 @@ class SQLTable: NSObject, SQLTableProtocol {
 
 extension SQLTableProtocol where Self: SQLTable {
 	/// Static variable indicating the table name - used in class methods since the instance variable `table` is not accessible in class methods.
-	static var table:String {
+	static var table: String {
 		let cls = "\(classForCoder())".lowercased()
-		let ndx = cls.index(before:cls.endIndex)
+		let ndx = cls.index(before: cls.endIndex)
 		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : (cls.hasSuffix("s") ? cls + "es" : cls + "s")
 		return tnm
 	}
@@ -512,9 +512,9 @@ extension SQLTableProtocol where Self: SQLTable {
 		if limit > 0 {
 			sql += " LIMIT 0, \(limit)"
 		}
-		return self.rowsFor(sql:sql)
+		return rowsFor(sql: sql)
 	}
-	
+
 	/// Return an array of values for an `SQLTable` sub-class based on a passed in SQL query.
 	///
 	/// - Parameter sql: The SQL query to be used to fetch the data. This should be a valid (and complete) SQL query
@@ -525,20 +525,19 @@ extension SQLTableProtocol where Self: SQLTable {
 		let data = tmp.values()
 		let db = SQLiteDB.shared
 		let fsql = sql.isEmpty ? "SELECT * FROM \(table)" : sql
-		let arr = db.query(sql:fsql)
+		let arr = db.query(sql: fsql)
 		for row in arr {
 			let t = self.init()
 			for (key, _) in data {
 				if let val = row[key] {
-					t.setValue(val, forKey:key)
+					t.setValue(val, forKey: key)
 				}
 			}
 			res.append(t)
 		}
 		return res
-		
 	}
-	
+
 	/// Return an instance of `SQLTable` sub-class for a given primary key value.
 	///
 	/// - Parameter id: The primary key value for the row of data you want to get.
@@ -552,18 +551,18 @@ extension SQLTableProtocol where Self: SQLTable {
 			val = "'\(id)'"
 		}
 		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(val)"
-		let arr = db.query(sql:sql)
+		let arr = db.query(sql: sql)
 		if arr.count == 0 {
 			return nil
 		}
 		for (key, _) in data {
 			if let val = arr[0][key] {
-				row.setValue(val, forKey:key)
+				row.setValue(val, forKey: key)
 			}
 		}
 		return row
 	}
-	
+
 	/// Return an instance of `SQLTable` sub-class for a given 0-based row number matching specific (optional) filtering and sorting criteria. Especially useful for fetching just one row to populate a `UITableView` as needed instead of populating a full array of data that you might (or might not) need.
 	///
 	/// - Parameters:
@@ -592,16 +591,15 @@ extension SQLTableProtocol where Self: SQLTable {
 		}
 		// Limit to specified row
 		sql += " LIMIT 1 OFFSET \(number)"
-		let arr = db.query(sql:sql)
+		let arr = db.query(sql: sql)
 		if arr.count == 0 {
 			return nil
 		}
 		for (key, _) in data {
 			if let val = arr[0][key] {
-				row.setValue(val, forKey:key)
+				row.setValue(val, forKey: key)
 			}
 		}
 		return row
 	}
 }
-
