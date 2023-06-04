@@ -699,27 +699,25 @@ extension SQLTableProtocol where Self: SQLTable {
 		let db = ckDB.dbFor(scope: Self.cloudDB)
 		let recordID = CKRecord.ID(recordName: name, zoneID: Self.zoneID)
 		let operation = CKFetchRecordsOperation(recordIDs: [recordID])
+		// We want only a single record - so perRecordResultBlock works. If we wanted a batch of records, then we'd have to batch up the results from perRecordResultBlock and then wait for fetchRecordsResultBlock completion to call the final closure with the full batch of results
+		operation.perRecordResultBlock = { recordID, result in
+			switch result {
+			case .failure(let error):
+				completion(nil, error)
+
+			case .success(let record):
+				completion(record, nil)
+			}
+		}
 //		operation.fetchRecordsResultBlock = { result in
 //			switch result {
 //			case .failure(let error):
 //				completion(nil, error)
 //
 //			case .success:
-//				completion(noteRecord, nil)
+//				completion(records, nil)
 //			}
 //		}
-		operation.fetchRecordsCompletionBlock = { records, error in
-			guard error == nil else {
-				completion(nil, error)
-				return
-			}
-			guard let noteRecord = records?[recordID] else {
-				// Didn't get the record we asked about? This shouldn’t happen but we’ll be defensive.
-				completion(nil, CKError.unknownItem as? Error)
-				return
-			}
-			completion(noteRecord, nil)
-		}
 		db.add(operation)
 	}
 
@@ -735,9 +733,51 @@ extension SQLTableProtocol where Self: SQLTable {
 		}
 		let operation = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: [])
         operation.savePolicy = .changedKeys
-//		operation.modifyRecordsResultBlock = { result in
-//			switch result {
-//			case .failure(let error):
+		// Should handle saved and deleted records via perRecordsSaveBlock and perRecordsDeleteBlock individually and if the data needs to be sent via closure, batch to separate arrays that can be sent when modifyRecordsResultBlock is executed/called.
+		operation.perRecordSaveBlock = { recordID, result in
+			switch result {
+			case .failure(let error):
+				// Cascade down to see if the error is ZoneNotFound
+				guard let ckerror = error as? CKError else {
+					NSLog("CloudKit save returned non-CKError: \(error)")
+					return
+				}
+#if os(iOS)
+				guard ckerror.code == .zoneNotFound else {
+					NSLog("CloudKit save returned CKError that isn't ZoneNotFound: \(error)")
+					return
+				}
+#endif
+				// ZoneNotFound is the one error we can reasonably expect & handle here, since the zone isn't created automatically for us until we've saved one record. create the zone and, if successful, try again
+				Self.createZone { error in
+					guard error == nil else {
+						// If we cannot create Zone, then that's it. Error out.
+						completion(error)
+						return
+					}
+					self.save(items: items, completion: completion)
+				}
+				
+			case .success(let record):
+				if let ndx = records.firstIndex(of: record) {
+					let t = items[ndx]
+					t.cloudLoad(record: record, onlyMeta: true)
+				}
+				// Comletion will be called from modifyRecordsResultBlock at the end of processing all records
+			}
+		}
+		operation.modifyRecordsResultBlock = { result in
+			switch result {
+			case .failure(let error):
+				NSLog("Error saving CloudKit records: \(error)")
+				completion(error)
+				
+			case .success:
+				completion(nil)
+			}
+		}
+//		operation.modifyRecordsCompletionBlock = {(saved, deleted, error) in
+//			guard error == nil else {
 //				guard let ckerror = error as? CKError else {
 //					completion(error)
 //					return
@@ -756,49 +796,19 @@ extension SQLTableProtocol where Self: SQLTable {
 //					}
 //					self.save(items: items, completion: completion)
 //				}
-//
-//			case .success():
+//				return
+//			}
+//			if let saved = saved, saved.count == items.count {
 //				// Update meta data from CloudKit
-//				for (index, row) in records.enumerated() {
+//				for (index, row) in saved.enumerated() {
 //					let t = items[index]
 //					t.cloudLoad(record: row, onlyMeta: true)
 //				}
-//				completion(nil)
+//			} else {
+//				NSLog("No saved records returned even though there was no error or different count returned")
 //			}
+//			completion(nil)
 //		}
-		operation.modifyRecordsCompletionBlock = {(saved, deleted, error) in
-			guard error == nil else {
-				guard let ckerror = error as? CKError else {
-					completion(error)
-					return
-				}
-#if os(iOS)
-				guard ckerror.code == .zoneNotFound else {
-					completion(error)
-					return
-				}
-#endif
-				// ZoneNotFound is the one error we can reasonably expect & handle here, since the zone isn't created automatically for us until we've saved one record. create the zone and, if successful, try again
-				Self.createZone { error in
-					guard error == nil else {
-						completion(error)
-						return
-					}
-					self.save(items: items, completion: completion)
-				}
-				return
-			}
-			if let saved = saved, saved.count == items.count {
-				// Update meta data from CloudKit
-				for (index, row) in saved.enumerated() {
-					let t = items[index]
-					t.cloudLoad(record: row, onlyMeta: true)
-				}
-			} else {
-				NSLog("No saved records returned even though there was no error or different count returned")
-			}
-			completion(nil)
-		}
 		db.add(operation)
 	}
 
