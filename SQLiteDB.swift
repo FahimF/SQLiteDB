@@ -34,7 +34,7 @@ class SQLiteDB: SQLiteBase {
 	override var description:String {
 		return "SQLiteDB: \(path ?? "")"
 	}
-	
+
 	// MARK:- Public Methods
 	/// Open the database specified by the `DB_NAME` variable and assigns the internal DB references. If a database is currently open, the method first closes the current database and gets a new DB references to the current database pointed to by `DB_NAME`
 	///
@@ -52,7 +52,13 @@ class SQLiteDB: SQLiteBase {
 			}
 		}
 		NSLog("Calling Super Open with path: \(path)")
-		return super.open(dbPath: path, copyFile: copyFile, inMemory: inMemory)
+		let opened = super.open(dbPath: path, copyFile: copyFile, inMemory: inMemory)
+		if opened && cloudEnabled {
+			DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + .milliseconds(100)) {
+				self.cloudDB.setup()
+			}
+		}
+		return opened
 	}
 	
 	/// Close the currently open SQLite database. Before closing the DB, the framework automatically takes care of optimizing the DB at frequent intervals by running the following commands:
@@ -85,29 +91,5 @@ class SQLiteDB: SQLiteBase {
 			}
 			super.closeDB()
 		}
-	}
-	
-	/// Create a record zone in the private DB for the given table
-	/// - Parameter version: An integer value indicating the new DB version.
-	func createCloudZone(table: SQLTable, completion: @escaping ()->Void) {
-		cloudDB.creaeZone(table: table) {
-			completion()
-		}
-	}
-	
-	func getCloudUpdates(table: SQLTable) {
-		cloudDB.getUpdates(table: table)
-	}
-	
-	/// Save data to the cloud via CloudKit
-	/// - Parameters:
-	///   - row: The SQLTable instance to be saved remotely.
-	///   - dbOverride: A `DBType` indicating the database to save the remote data to. If set, this overrides the database set by default for the table via the `remoteDB` method. Defaults to `none`.
-	func saveToCloud(row: SQLTable, dbOverride: DBType = .none) {
-		if !cloudEnabled {
-			return
-		}
-		// Save to cloude
-		cloudDB.saveToCloud(row: row)
-	}
+	}	
 }

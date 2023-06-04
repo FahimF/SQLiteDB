@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CloudKit
 
 /// Enumerator to be used in fetching data via some methods where you might need to specify whether you want all records, only records marked for deletion, or only records not marked for deletion.
 @objc
@@ -14,24 +15,52 @@ enum FetchType: Int {
 	case all, deleted, nondeleted
 }
 
+@objc
+enum DBType: Int {
+	case none, publicDB, privateDB, sharedDB
+}
+
 protocol SQLTableProtocol {}
 
 // MARK: - SQLiteDB Class
 /// Base class for providing object-based access to SQLite tables. Simply define the properties and their default values (a value has to be there in order to determine value type) and SQLTable will handle the basic CRUD (creating, reading, updating, deleting) actions for you without any additional code.
 @objcMembers
-class SQLTable: NSObject, SQLTableProtocol {
+class SQLTable: NSObject, SQLTableProtocol, Identifiable {
 	/// Every SQLTable sub-class will contain an `isDeleted` flag. Instead of deleting records, you should set the flag to `true` for deletions and filter your data accordingly when fetching data from `SQLTable`. This flag will be used to synchronize deletions via CloudKit
 	public var isDeleted = false
+
 	/// Every SQLTable sub-class will contain a `created` property indicating the creation date of the record.
 	public var created = Date()
-	/// Every SQLTable sub-class will contain a `modified` property indicating the last modification date of the record.
-	public var modified = Date()
+
+	/// Every SQLTable sub-class will contain a `updated` property indicating the last modification date of the record.
+	public var updated = Date()
+
 	/// Internal reference to the SQLite table name as determined based on the name of the `SQLTable` sub-class name. The sub-class name should be in the singular - for example, Task for a tasks table.
 	internal var table = ""
+
+	/// The CloudKit meta data
+	internal var ckMeta = Data()
+
 	/// Internal dictionary to keep track of whether a specific table was verfied to be in existence in the database. This dictionary is used to automatically create the table if it does not exist in the DB.
 	private static var verified = [String: Bool]()
+
 	/// Internal pointer to the main database
 	internal var db = SQLiteDB.shared
+
+	/// The primary key for the table - defaults to `id`. Override this in `SQLTable` sub-classes to define a different column name as the primary key.
+	var primaryKey: String {
+		"id"
+	}
+
+	/// An array of property names (in a sub-classed instance of `SQLTable`) that are to be ignored when fetching/saving information to the DB. Override this method in sub-classes when you have properties that you don't want persisted to the database.
+	var ignoredKeys: [String] {
+		return []
+	}
+
+	/// The CloudKit meta data key name for the table - defaults to `ckMeta`. Override this in sub-classes to define a different column name. This key should be data type and will be using `encodeSystemFieldsWithCoder(with:)` to to store data from a `CKRecord` instance.
+	var cloudKey: String {
+		"ckMeta"
+	}
 
 	/// Base initialization which sets up the table name and then verifies that the table exists in the DB, and if it does not, creates it.
 	override required init() {
@@ -71,53 +100,14 @@ class SQLTable: NSObject, SQLTableProtocol {
 			} else {
 				assert(false, "Got more than one table in DB with same name! Count: \(cnt) for \(table)")
 			}
-			// Create CloudKit zone, if necessary
-			if db.cloudEnabled {
-				if remoteDB() == DBType.privateDB {
-					db.createCloudZone(table: self) {
-						self.db.getCloudUpdates(table: self)
-					}
-				} else {
-					db.getCloudUpdates(table: self)
-				}
-			}
 		}
 	}
 
 	// MARK: - NSCoding / NSCopying Support
 	func copy(to: SQLTable) {
 		to.created = created
-		to.modified = modified
+		to.updated = updated
 		to.isDeleted = isDeleted
-	}
-
-	// MARK: - Table property management
-	/// The primary key for the table - defaults to `id`. Override this in `SQLTable` sub-classes to define a different column name as the primary key.
-	///
-	/// - Returns: A string indicating the name of the primary key column for the table. Defaults to `id`.
-	func primaryKey() -> String {
-		"id"
-	}
-
-	/// The remote key for the table for data saved to CloudKit - defaults to `ckid`. Override this in `SQLTable` sub-classes to define a different column name as the remote key.
-	///
-	/// - Returns: A string indicating the name of the remote key column for the table. Defaults to `ckid`.
-	func remoteKey() -> String {
-		"ckid"
-	}
-
-	/// The remote database for the table for data saved to CloudKit - defaults to `private`. Override this in `SQLTable` sub-classes to define a different database for a specific table.
-	///
-	/// - Returns: A `DBType` enum indicating the remote database for the table. Defaults to `private`.
-	func remoteDB() -> DBType {
-		DBType.privateDB
-	}
-
-	/// An array of property names (in a sub-classed instance of `SQLTable`) that are to be ignored when fetching/saving information to the DB. Override this method in sub-classes when you have properties that you don't want persisted to the database.
-	///
-	/// - Returns: An array of String values indicating property/value names to be ignored when persisting data to the database.
-	func ignoredKeys() -> [String] {
-		[]
 	}
 
 	// MARK: - Class Methods
@@ -176,7 +166,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 	class func remove(filter: String = "", force: Bool = false) -> Bool {
 		let db = SQLiteDB.shared
 		var params: [Any]? = [true, Date()]
-		var sql = "UPDATE \(table) SET isDeleted = ?, modified = ?"
+		var sql = "UPDATE \(table) SET isDeleted = ?, updated = ?"
 		if force {
 			params = nil
 			sql = "DELETE FROM \(table)"
@@ -217,15 +207,17 @@ class SQLTable: NSObject, SQLTableProtocol {
 	///   - dbOverride: A `DBType` indicating the database to save the remote data to. If set, this overrides the database set by default for the table via the `remoteDB` method. Defaults to `none`.
 	/// - Returns: An integer value indicating either the row id (in case of an insert) or the status of the save - a non-zero value indicates success and a 0 indicates failure.
 	func save(updateCloud: Bool = true, dbOverride: DBType = .none) -> Int {
-		let key = primaryKey()
+		// Call pre-save method
+		preSave()
+		// Save data
 		let data = values()
 		var insert = true
-		if let rid = data[key] {
+		if let rid = data[primaryKey] {
 			var val = "\(rid)"
 			if rid is String {
 				val = "'\(rid)'"
 			}
-			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey())=\(val)"
+			let sql = "SELECT COUNT(*) AS count FROM \(table) WHERE \(primaryKey)=\(val)"
 			let arr = db.query(sql: sql)
 			if arr.count == 1 {
 				if let cnt = arr[0]["count"] as? Int {
@@ -234,24 +226,28 @@ class SQLTable: NSObject, SQLTableProtocol {
 			}
 		}
 		// Insert or update
-		modified = Date()
+		updated = Date()
 		let (sql, params) = getSQL(data: data, forInsert: insert)
 		let rc = db.execute(sql: sql, parameters: params)
 		if rc == 0 {
 			NSLog("Error saving record!")
 			return 0
 		}
-		// Do cloud update - check (as to whether to save to cloud is done by DB)
-		if updateCloud {
-			db.saveToCloud(row: self)
-		}
 		// Update primary key
-		let pid = data[key]
+		let pid = data[primaryKey]
 		if insert {
 			if pid is Int64 {
-				setValue(rc, forKey: key)
+				setValue(rc, forKey: primaryKey)
 			} else if pid is Int {
-				setValue(Int(rc), forKey: key)
+				setValue(Int(rc), forKey: primaryKey)
+			}
+		}
+		// Do cloud update - check (as to whether to save to cloud is done by DB)
+		if updateCloud && db.cloudEnabled {
+			SQLTable.save(items: [self]) {(error) in
+				if let error = error {
+					NSLog("Error saving data to iCloud: \(error)")
+				}
 			}
 		}
 		return rc
@@ -261,28 +257,44 @@ class SQLTable: NSObject, SQLTableProtocol {
 	///
 	/// - Parameter force: Flag indicating whether to force delete the records or simply mark them as deleted. Defaluts to `false`.
 	/// - Returns: A boolean value indicating the success or failure of the operation.
-	func delete(force: Bool = false) -> Bool {
-		let key = primaryKey()
+	func delete(updateCloud: Bool = true, force: Bool = false) -> Bool {
 		let data = values()
-		if let rid = data[key] {
+		var res = 0
+		if let rid = data[primaryKey] {
 			var params: [Any]? = [true, Date()]
-			var sql = "UPDATE \(table) SET isDeleted = ?, modified = ? WHERE \(primaryKey())=\(rid)"
+			var sql = "UPDATE \(table) SET isDeleted = ?, updated = ? WHERE \(primaryKey)=\(rid)"
 			if force {
 				params = nil
-				sql = "DELETE FROM \(table) WHERE \(primaryKey())=\(rid)"
+				sql = "DELETE FROM \(table) WHERE \(primaryKey)=\(rid)"
 			}
-			let rc = db.execute(sql: sql, parameters: params)
-			return (rc != 0)
+			res = db.execute(sql: sql, parameters: params)
 		}
-		return false
+		if updateCloud && db.cloudEnabled {
+			cloudDelete()
+		}
+		return (res != 0)
+	}
+
+	/// Delete a record from CloudKit
+	func cloudDelete() {
+		let ckDB = CloudDB.shared
+		let db = ckDB.dbFor(scope: Self.cloudDB)
+		// Set up remote ID
+		guard let ckid = recordID() else { return }
+		db.delete(withRecordID: ckid) { rid, error in
+			if let error = error {
+				NSLog("Error deleting CloudKit record: \(error.localizedDescription)")
+				return
+			}
+			NSLog("Deleted record successfully! ID - \(rid!.recordName)")
+		}
 	}
 
 	/// Update the data for this particular `SQLTable` sub-class instance from the database so that all values are updated with the latest values from the database.
 	func refresh() {
-		let key = primaryKey()
 		let data = values()
-		if let rid = data[key] {
-			let sql = "SELECT * FROM \(table) WHERE \(primaryKey())=\(rid)"
+		if let rid = data[primaryKey] {
+			let sql = "SELECT * FROM \(table) WHERE \(primaryKey)=\(rid)"
 			let arr = db.query(sql: sql)
 			for (key, _) in data {
 				if let val = arr[0][key] {
@@ -292,6 +304,16 @@ class SQLTable: NSObject, SQLTableProtocol {
 		}
 	}
 
+	/// Sub-classed method which is called before saving data in case you needed to set up data to be saved
+	func postLoad() {
+		// To be overridden in sub-class
+	}
+	
+	/// Sub-classed method which is called after loading data in case you needed to set up extra properties based on loaded data
+	func preSave() {
+		// To be overridden in sub-class
+	}
+	
 	// MARK: - Internal Methods
 	/// Fetch a dictionary of property names and their corresponding values that are supposed to be persisted to the underlying table. Any property names returned via the `ignoredKeys` method will be left out of the dictionary.
 	///
@@ -305,6 +327,65 @@ class SQLTable: NSObject, SQLTableProtocol {
 		return res
 	}
 
+	/// Create a `CKRecord` instance from contained data and the previously stored meta data (if it exists)
+	internal func getRecord() -> CKRecord {
+		let data = values()
+		guard let pid = data[primaryKey] else {
+			fatalError("Could not get Primary Key for data: \(data)")
+		}
+		let name = "\(table)-\(pid)"
+		let rid = CKRecord.ID(recordName: name, zoneID: Self.zoneID)
+		var rec = CKRecord(recordType: Self.recordType, recordID: rid)
+		// Set up CloudKit meta data
+		if let meta = data[cloudKey] as? Data, !meta.isEmpty {
+			do {
+				let unarchiver = try NSKeyedUnarchiver(forReadingFrom: meta)
+				unarchiver.requiresSecureCoding = true
+				if let r = CKRecord(coder: unarchiver) {
+					rec = r
+				}
+			} catch {
+				NSLog("Error unarchive CKRecord meta data: \(error)")
+			}
+		}
+		// Load data
+		for key in data.keys {
+			if key == cloudKey {
+				continue
+			}
+			rec[key] = data[key] as? __CKRecordObjCValue
+		}
+		return rec
+	}
+
+	/// Load data from a passed in `CKRecord` instance and store the meta data from the `CKRecord`
+	internal func cloudLoad(record: CKRecord, onlyMeta: Bool = false) {
+		let data = values()
+		let archiver = NSKeyedArchiver(requiringSecureCoding: true)
+		record.encodeSystemFields(with: archiver)
+		let meta = archiver.encodedData
+		self.setValue(meta, forKey: cloudKey)
+		if onlyMeta {
+			return
+		}
+		// Set primary key from record info
+		var name = record.recordID.recordName
+		name = name.replacingOccurrences(of: "\(table)-", with: "")
+		if let pid = Int(name) {
+			self.setValue(pid, forKey: primaryKey)
+		}
+		// Set the rest of the data based on class properties
+		for key in data.keys {
+			// Skip meta data key and primary key since we've already set them
+			if key == cloudKey || key == primaryKey {
+				continue
+			}
+			if let value = record[key] {
+				self.setValue(value, forKey: key)
+			}
+		}
+	}
+
 	// MARK: - Private Methods
 	/// Recursively walk down the super-class hierarchy to get all the properties for a `SQLTable` sub-class instance
 	///
@@ -316,6 +397,28 @@ class SQLTable: NSObject, SQLTableProtocol {
 		processMirror(obj: obj, results: &results)
 		// Call method recursively
 		getValues(obj: obj.superclassMirror, results: &results)
+	}
+
+	/// Get the CloudKit record ID for the passed in SQLTable sub-class. The method creates a record ID if there's a valid record ID. If not, it returns `nil`.
+	///   - row: The SQLTable instance to be deleted remotely.
+	///   - type: The database type - should be one of `.public`, `.private`, or `.shared`.
+	private func recordID() -> CKRecord.ID? {
+		let data = values()
+		// Set up remote ID
+		if let meta = data[cloudKey] as? Data, !meta.isEmpty {
+			if let unarchiver = try? NSKeyedUnarchiver(forReadingFrom: meta) {
+				unarchiver.requiresSecureCoding = true
+				let rec = CKRecord(coder: unarchiver)
+				return rec?.recordID
+			}
+		}
+		// Set up record ID based on local ID and type
+		if let pid = data[primaryKey] {
+			let name = "\(table)-\(pid)"
+			let rid = CKRecord.ID(recordName: name, zoneID: Self.zoneID)
+			return rid
+		}
+		return nil
 	}
 
 	/// Creates a dictionary of property names and values based on a `Mirror` instance of an object.
@@ -335,7 +438,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 					continue
 				}
 				// Ignore special properties and lazy vars
-				if ignoredKeys().contains(name) || name.hasSuffix(".storage") {
+				if ignoredKeys.contains(name) || name.hasSuffix(".storage") || name.hasPrefix("_") {
 					continue
 				}
 				results[name] = attr.value
@@ -383,26 +486,27 @@ class SQLTable: NSObject, SQLTableProtocol {
 		var params: [Any]?
 		if forInsert {
 			// INSERT INTO tasks(task, categoryID) VALUES ('\(txtTask.text)', 1)
-			sql = "INSERT INTO \(table)("
+			sql = "INSERT INTO \"\(table)\"("
 		} else {
 			// UPDATE tasks SET task = ? WHERE categoryID = ?
-			sql = "UPDATE \(table) SET "
+			sql = "UPDATE \"\(table)\" SET "
 		}
-		let pkey = primaryKey()
 		var wsql = ""
 		var rid: Any?
 		var first = true
 		for (key, val) in data {
 			// Primary key handling
-			if pkey == key {
+			if primaryKey == key {
 				if forInsert {
-					if val is Int, (val as! Int) == -1 {
-						// Do not add this since this is (could be?) an auto-increment value
-						continue
-					}
+					// Skip primary key only if it is not set, since if the data is coming from the cloud, the primary key will be already set
+                    if let sid = val as? String, sid.isEmpty {
+                        continue
+                    } else if let nid = val as? Int, nid == -1 {
+                        continue
+                    }
 				} else {
 					// Update - set up WHERE clause
-					wsql += " WHERE " + key + " = ?"
+					wsql += " WHERE \"" + key + "\" = ?"
 					rid = val
 					continue
 				}
@@ -412,12 +516,20 @@ class SQLTable: NSObject, SQLTableProtocol {
 				params = [Any]()
 			}
 			if forInsert {
-				sql += first ? "\(key)" : ", \(key)"
-				wsql += first ? " VALUES (?" : ", ?"
-				params!.append(val)
+				sql += first ? "\"\(key)\"" : ", \"\(key)\""
+				if val is String || val is Data || val is Date {
+					wsql += first ? " VALUES (?" : ", ?"
+					params!.append(val)
+				} else {
+					wsql += first ? " VALUES (\(val)" : ", \(val)"
+				}
 			} else {
-				sql += first ? "\(key) = ?" : ", \(key) = ?"
-				params!.append(val)
+				if val is String || val is Data || val is Date {
+					sql += first ? "\"\(key)\" = ?" : ", \"\(key)\" = ?"
+					params!.append(val)
+				} else {
+					sql += first ? "\"\(key)\" = \(val)" : ", \"\(key)\" = \(val)"
+				}
 			}
 			first = false
 		}
@@ -443,7 +555,7 @@ class SQLTable: NSObject, SQLTableProtocol {
 		if val is Int {
 			// Integers
 			sql += "INTEGER"
-			if key == primaryKey() {
+			if key == primaryKey {
 				sql += " PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE"
 			} else {
 				sql += " DEFAULT \(val)"
@@ -463,13 +575,13 @@ class SQLTable: NSObject, SQLTableProtocol {
 //						sql += " DEFAULT current_timestamp"
 //					}
 //				}
-			} else if val is NSData {
+			} else if val is Data {
 				sql += "BLOB"
 			} else {
 				// Default to text
 				sql += "TEXT"
 			}
-			if key == primaryKey() {
+			if key == primaryKey {
 				sql += " PRIMARY KEY NOT NULL UNIQUE"
 			}
 		}
@@ -484,6 +596,210 @@ extension SQLTableProtocol where Self: SQLTable {
 		let ndx = cls.index(before: cls.endIndex)
 		let tnm = cls.hasSuffix("y") ? cls[..<ndx] + "ies" : (cls.hasSuffix("s") ? cls + "es" : cls + "s")
 		return tnm
+	}
+
+	static var recordType: String {
+		return "\(classForCoder())"
+	}
+	/// The CloudKit database type for the table - defaults to `private`. Override this in sub-classes to define a different type for a specific table.
+	///
+	/// - Returns: A `CKDatabase.Scope` enum indicating the CloudKit database type for the table. Defaults to `private`.
+	static var cloudDB: CKDatabase.Scope {
+		.private
+	}
+
+	/// The custom internal CloudKit zone, or the default one for databases that don't support custom zones
+	static var zone: CKRecordZone {
+		if cloudDB != .public {
+			return CKRecordZone(zoneName: "custom-zone")
+		}
+		return CKRecordZone.default()
+	}
+
+	/// The CloudKit zone ID for the internal custom zone
+	static var zoneID: CKRecordZone.ID {
+		zone.zoneID
+	}
+
+	/// Create a custom zone to contain our records. We only have to do this once.
+	static func createZone(completion: @escaping (Error?) -> Void) {
+		let ckDB = CloudDB.shared
+		let db = ckDB.dbFor(scope: Self.cloudDB)
+		let operation = CKModifyRecordZonesOperation(recordZonesToSave: [zone], recordZoneIDsToDelete: [])
+		operation.modifyRecordZonesResultBlock = { result in
+			switch result {
+			case .failure(let error):
+				NSLog("Error modifying record zones: \(error)")
+				completion(error)
+				
+			case .success:
+				completion(nil)
+			}
+		}
+		db.add(operation)
+	}
+
+	/// Get all records for this table from CloudKit that match passed in predicate, or all records if no predicate is provided
+    static func records(predicate: NSPredicate = NSPredicate(value: true), completion: @escaping ([Self], Error?) -> Void) {
+		var res = [Self]()
+		let ckDB = CloudDB.shared
+		let db = ckDB.dbFor(scope: Self.cloudDB)
+		let query = CKQuery(recordType: recordType, predicate: predicate)
+        var cnt = 0
+        // Create query operation since db.perform only fetches a few hundreds records at most and not the full set of data. Query operation also has a maximum, but also returns a cursor when there are more records
+        var qop = CKQueryOperation(query: query)
+        qop.zoneID = zoneID
+        // Query operation record fetch block to handle fetched records
+		qop.recordMatchedBlock = {rid, result in
+			switch result {
+			case .failure(let error):
+				NSLog("Record matched error: \(error)")
+				
+			case .success(let rec):
+				cnt += 1
+				let t = Self.init()
+				t.cloudLoad(record: rec)
+				res.append(t)
+			}
+		}
+        // Query operation completion block
+		qop.queryResultBlock = { result in
+			switch result {
+			case .failure(let error):
+				DispatchQueue.main.async {
+					completion(res, error)
+				}
+				
+			case .success(let cursor):
+				// Did we get a cursor back?
+				if let cursor = cursor {
+					NSLog("*** Cursor - sending another query")
+					let newq = CKQueryOperation(cursor: cursor)
+					newq.zoneID = zoneID
+					newq.queryResultBlock = qop.queryResultBlock
+					newq.recordMatchedBlock = qop.recordMatchedBlock
+					// We must hang on to the new query so as to complete everything correctly
+					qop = newq
+					db.add(qop)
+				} else {
+					NSLog("*** At end: processed \(cnt) records")
+					// We are done
+					DispatchQueue.main.async {
+						completion(res, nil)
+					}
+				}
+			}
+		}
+        db.add(qop)
+	}
+
+	/// Fetch a record from CloudKit for a given record name
+	func record(name: String, completion: @escaping (CKRecord?, Error?) -> Void) {
+		let ckDB = CloudDB.shared
+		let db = ckDB.dbFor(scope: Self.cloudDB)
+		let recordID = CKRecord.ID(recordName: name, zoneID: Self.zoneID)
+		let operation = CKFetchRecordsOperation(recordIDs: [recordID])
+//		operation.fetchRecordsResultBlock = { result in
+//			switch result {
+//			case .failure(let error):
+//				completion(nil, error)
+//
+//			case .success:
+//				completion(noteRecord, nil)
+//			}
+//		}
+		operation.fetchRecordsCompletionBlock = { records, error in
+			guard error == nil else {
+				completion(nil, error)
+				return
+			}
+			guard let noteRecord = records?[recordID] else {
+				// Didn't get the record we asked about? This shouldn’t happen but we’ll be defensive.
+				completion(nil, CKError.unknownItem as? Error)
+				return
+			}
+			completion(noteRecord, nil)
+		}
+		db.add(operation)
+	}
+
+	/// Save a record to CloudKit
+	static func save(items: [Self], completion: @escaping (Error?) -> Void) {
+		let ckDB = CloudDB.shared
+		let db = ckDB.dbFor(scope: Self.cloudDB)
+		// Get CKRecords
+		var records = [CKRecord]()
+		for item in items {
+			let r = item.getRecord()
+			records.append(r)
+		}
+		let operation = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: [])
+        operation.savePolicy = .changedKeys
+//		operation.modifyRecordsResultBlock = { result in
+//			switch result {
+//			case .failure(let error):
+//				guard let ckerror = error as? CKError else {
+//					completion(error)
+//					return
+//				}
+//#if os(iOS)
+//				guard ckerror.code == .zoneNotFound else {
+//					completion(error)
+//					return
+//				}
+//#endif
+//				// ZoneNotFound is the one error we can reasonably expect & handle here, since the zone isn't created automatically for us until we've saved one record. create the zone and, if successful, try again
+//				Self.createZone { error in
+//					guard error == nil else {
+//						completion(error)
+//						return
+//					}
+//					self.save(items: items, completion: completion)
+//				}
+//
+//			case .success():
+//				// Update meta data from CloudKit
+//				for (index, row) in records.enumerated() {
+//					let t = items[index]
+//					t.cloudLoad(record: row, onlyMeta: true)
+//				}
+//				completion(nil)
+//			}
+//		}
+		operation.modifyRecordsCompletionBlock = {(saved, deleted, error) in
+			guard error == nil else {
+				guard let ckerror = error as? CKError else {
+					completion(error)
+					return
+				}
+#if os(iOS)
+				guard ckerror.code == .zoneNotFound else {
+					completion(error)
+					return
+				}
+#endif
+				// ZoneNotFound is the one error we can reasonably expect & handle here, since the zone isn't created automatically for us until we've saved one record. create the zone and, if successful, try again
+				Self.createZone { error in
+					guard error == nil else {
+						completion(error)
+						return
+					}
+					self.save(items: items, completion: completion)
+				}
+				return
+			}
+			if let saved = saved, saved.count == items.count {
+				// Update meta data from CloudKit
+				for (index, row) in saved.enumerated() {
+					let t = items[index]
+					t.cloudLoad(record: row, onlyMeta: true)
+				}
+			} else {
+				NSLog("No saved records returned even though there was no error or different count returned")
+			}
+			completion(nil)
+		}
+		db.add(operation)
 	}
 
 	/// Return an array of values for an `SQLTable` sub-class (optionally) matching specified filter criteria, (optionally) in a given column order, and (optionally) limited to a specific number of rows.
@@ -534,6 +850,8 @@ extension SQLTableProtocol where Self: SQLTable {
 				}
 			}
 			res.append(t)
+			// Call post-load for data record
+			t.postLoad()
 		}
 		return res
 	}
@@ -550,7 +868,7 @@ extension SQLTableProtocol where Self: SQLTable {
 		if id is String {
 			val = "'\(id)'"
 		}
-		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey())=\(val)"
+		let sql = "SELECT * FROM \(table) WHERE \(row.primaryKey)=\(val)"
 		let arr = db.query(sql: sql)
 		if arr.count == 0 {
 			return nil
@@ -560,6 +878,8 @@ extension SQLTableProtocol where Self: SQLTable {
 				row.setValue(val, forKey: key)
 			}
 		}
+		// Call post-load for data record
+		row.postLoad()
 		return row
 	}
 
@@ -600,6 +920,8 @@ extension SQLTableProtocol where Self: SQLTable {
 				row.setValue(val, forKey: key)
 			}
 		}
+		// Call post-load for data record
+		row.postLoad()
 		return row
 	}
 }

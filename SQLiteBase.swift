@@ -20,6 +20,8 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.sel
 class SQLiteBase: NSObject {
 	/// The SQLite database file name - defaults to `data.db`.
 	var DB_NAME = "data.db"
+    /// Shared group identifier - if specified, then the database will be copied to the shared group location
+    var groupID = ""
 	/// Internal name for GCD queue used to execute SQL commands so that all commands are executed sequentially
 	private let QUEUE_LABEL = "SQLiteDB"
 	/// The internal GCD queue
@@ -49,7 +51,7 @@ class SQLiteBase: NSObject {
 	override var description: String {
 		return "SQLiteBase: \(path ?? "")"
 	}
-	
+
 	// MARK: - Public Methods
 	/// Open the database specified by the `DB_NAME` variable and assigns the internal DB references. If a database is currently open, the method first closes the current database and gets a new DB references to the current database pointed to by `DB_NAME`
 	///
@@ -83,7 +85,7 @@ class SQLiteBase: NSObject {
 #endif
 				let oldSrc = docDir.appendingPathComponent(DB_NAME)
 				// New destination
-				guard var libDir = fm.urls(for: FileManager.SearchPathDirectory.libraryDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first else { return false }
+                guard var libDir = dataDir() else { return false }
 // If macOS, add app name to path
 #if os(OSX)
 				libDir = libDir.appendingPathComponent(appName)
@@ -209,7 +211,20 @@ class SQLiteBase: NSObject {
 	}
 	
 	// MARK: - Private Methods
-	
+
+    /// Return the data folder based on a provided group identifier or
+    private func dataDir() -> URL? {
+        if !groupID.isEmpty {
+            if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
+                return url
+            }
+        }
+        if let dir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first {
+            return dir
+        }
+        return nil
+    }
+
 	/// Private method to prepare an SQL statement before executing it.
 	///
 	/// - Parameters:

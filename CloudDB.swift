@@ -1,193 +1,294 @@
 //
 //  CloudDB.swift
-//  SQLiteDB-iOS
+//  SQLiteDB
 //
-//  Created by Fahim Farook on 10/4/2017.
-//  Copyright © 2017 RookSoft Pte. Ltd. All rights reserved.
+//  Created by Fahim Farook on 22-10-2020.
+//  Copyright © 2020 RookSoft Ltd. All rights reserved.
 //
 
 import CloudKit
+import Foundation
 
-@objc
-enum DBType: Int {
-	case none, publicDB, privateDB, sharedDB
-}
-
-// MARK:- CloudDB Class
-/// Class for remotely saving local SQLiteDB data using CloudKit
-@objc(CloudDB)
-class CloudDB: NSObject {
-	/// Singleton instance for access to the CloudDB class
+class CloudDB {
 	static let shared = CloudDB()
-	/// Default CloudKit container
-	private let container = CKContainer.default()
-	/// Reference to public CloudKit database
-	private let publicDB: CKDatabase
-	/// Reference to private CloudKit database
-	private let privateDB: CKDatabase
-	/// Reference to shared CloudKit database
-	private let sharedDB: CKDatabase!
 
-	override private init() {
-		self.publicDB = container.publicCloudDatabase
-		self.privateDB = container.privateCloudDatabase
-		if #available(iOS 10.0, macOS 10.12, tvOS 10.0, watchOS 3.0, *) {
-			self.sharedDB = container.sharedCloudDatabase
+    var subscriptionPrefix = "clouddb"
+
+	private let def = UserDefaults.standard
+	private let container: CKContainer
+	private var dbs = [CKDatabase.Scope: CKDatabase]()
+
+	private init() {
+		container = CKContainer.default()
+		// Set up DBs
+		dbs[.private] = container.privateCloudDatabase
+		dbs[.public] = container.publicCloudDatabase
+		dbs[.shared] = container.sharedCloudDatabase
+	}
+
+	// MARK: - Public Methods
+	public func setup() {
+		// Subscriptions and fetch changes since quit
+		saveSubscription(scope: .private)
+		fetchDatabaseChanges(scope: .private)
+//		saveSubscription(scope: .public)
+//		fetchDatabaseChanges(scope: .public)
+		saveSubscription(scope: .shared)
+		fetchDatabaseChanges(scope: .shared)
+	}
+
+	public func dbFor(scope: CKDatabase.Scope) -> CKDatabase {
+		dbs[scope]!
+	}
+
+	// Handle receipt of an incoming push notification that something has changed.
+	public func handleNotification(scope: CKDatabase.Scope) {
+		// Pass on to internal handler
+		fetchDatabaseChanges(scope: scope)
+	}
+
+	// MARK: - Private Methods
+	private func getChangeTokenKey(scope: CKDatabase.Scope, zone: String = "") -> String {
+		var key = ""
+		if zone.isEmpty {
+			switch scope {
+			case .private:
+				key = "PrivateDatabaseServerChangeToken"
+
+			case .public:
+				key = "PublicDatabaseServerChangeToken"
+
+			case .shared:
+				key = "SharedDatabaseServerChangeToken"
+
+			@unknown default:
+				fatalError()
+			}
 		} else {
-			self.sharedDB = nil
+			key = zone + "ZoneChangeToken"
 		}
-		super.init()
+		return key
 	}
-	
-	/// Create a record zone in the private DB for the given table
-	/// - Parameter version: An integer value indicating the new DB version.
-	func creaeZone(table: SQLTable, completion: @escaping ()->Void) {
-		let zone = CKRecordZone(zoneName: table.table)
-		privateDB.save(zone) {(_, error) in
-			if let error = error {
-				NSLog("Error creating record zone for: \(table.table) - \(error.localizedDescription)")
+
+	private func getToken(scope: CKDatabase.Scope, zone: String = "") -> CKServerChangeToken? {
+		let key = getChangeTokenKey(scope: scope, zone: zone)
+		guard let data = def.value(forKey: key) as? Data else {
+			return nil
+		}
+		guard let token = try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: data) else {
+			return nil
+		}
+		return token
+	}
+
+	private func setToken(scope: CKDatabase.Scope, zone: String = "", token: CKServerChangeToken?) {
+		let key = getChangeTokenKey(scope: scope, zone: zone)
+		if let token = token {
+			if let data = try? NSKeyedArchiver.archivedData(withRootObject: token, requiringSecureCoding: true) {
+				def.set(data, forKey: key)
 			}
-			completion()
-		}
-	}
-	
-	func getUpdates(table: SQLTable) {
-		if table.remoteDB() == DBType.privateDB {
-			// Get updates via CKFetchRecordChangesOperation
 		} else {
-			// Get all updates via CKFetchDatabaseChangesOperation
+			def.removeObject(forKey: key)
 		}
 	}
-	
-	/// Save data to the cloud via CloudKit
-	/// - Parameters:
-	///   - row: The SQLTable instance to be saved remotely.
-	///   - dbOverride: A `DBType` indicating the database to save the remote data to. If set, this overrides the database set by default for the table via the `remoteDB` method. Defaults to `none`.
-	func saveToCloud(row: SQLTable, dbOverride: DBType = .none) {
-		var type = row.remoteDB()
-		if dbOverride != .none {
-			type = dbOverride
+
+	private func getSubscriptionKey(scope: CKDatabase.Scope) -> String {
+		switch scope {
+		case .private:
+			return "PrivateDatabaseSubscriptionSaved"
+
+		case .public:
+			return "PublicDatabaseSubscriptionSaved"
+
+		case .shared:
+			return "SharedDatabaseSubscriptionSaved"
+
+		@unknown default:
+			fatalError()
 		}
-		// Set up remote ID
-		let idName = row.remoteKey()
-		var sid = ""
-		let rid = recordIDFor(row: row, type: type)
-		if let rid = rid {
-			sid = rid.recordName
+	}
+
+	private func alreadySubscribed(scope: CKDatabase.Scope) -> Bool {
+		let key = getSubscriptionKey(scope: scope)
+		return def.bool(forKey: key)
+	}
+
+	private func setSubscribed(scope: CKDatabase.Scope) {
+		let key = getSubscriptionKey(scope: scope)
+		def.setValue(true, forKey: key)
+	}
+
+	private func getSubscriptionID(scope: CKDatabase.Scope) -> String {
+		switch scope {
+		case .private:
+			return "\(subscriptionPrefix)-private-changes"
+
+		case .public:
+			return "\(subscriptionPrefix)-public-changes"
+
+		case .shared:
+			return "\(subscriptionPrefix)-shared-changes"
+
+		@unknown default:
+			fatalError()
 		}
-		// Create CloudKit record
-		let record = recordFor(recordID: rid, row: row, type: type)
-		// Save to DB
-		let db = dbFor(type: type)
-		db.save(record) {(rec, error) in
-			if let error = error {
-				NSLog("Error saving CloudKit data: \(error.localizedDescription)")
-				return
+	}
+
+	// Create the CloudKit subscription we’ll use to receive notification of changes. The SubscriptionID lets us identify when an incoming notification is associated with the query we created.
+	private func saveSubscription(scope: CKDatabase.Scope) {
+		// Have we already subscribed?
+		if alreadySubscribed(scope: scope) {
+			return
+		}
+		let subscriptionID = getSubscriptionID(scope: scope)
+		// Get notified of all DB changes
+		let subscription = CKDatabaseSubscription(subscriptionID: subscriptionID)
+		// We set shouldSendContentAvailable to true to indicate we want CloudKit to use silent pushes, which won’t bother the user (and which don’t require user permission.)
+		let notificationInfo = CKSubscription.NotificationInfo()
+		notificationInfo.shouldSendContentAvailable = true
+		subscription.notificationInfo = notificationInfo
+		let operation = CKModifySubscriptionsOperation(subscriptionsToSave: [subscription], subscriptionIDsToDelete: [])
+		operation.modifySubscriptionsResultBlock = { result in
+			switch result {
+			case .failure(let error):
+				NSLog("Error modifying subscription: \(error)")
+				
+			case .success:
+				self.setSubscribed(scope: scope)
 			}
-			// Save remote id locally
-			if let rec = rec {
-				let ckid = rec.recordID.recordName
-				if sid != ckid {
-					row.setValue(ckid, forKey: idName)
-					_ = row.save(updateCloud: false)
-				}
-				NSLog("Saved record successfully! ID - \(ckid)")
-			}
 		}
+		dbFor(scope: scope).add(operation)
 	}
-	
-	/// Delete data from the cloud via CloudKit
-	/// - Parameters:
-	///   - row: The SQLTable instance to be deleted remotely.
-	///   - dbOverride: A `DBType` indicating the database to delete the remote data from. If set, this overrides the database set by default for the table via the `remoteDB` method. Defaults to `none`.
-	func deleteFromCloud(row: SQLTable, dbOverride: DBType = .none) {
-		var type = row.remoteDB()
-		if dbOverride != .none {
-			type = dbOverride
-		}
-		// DB to use
-		let db = dbFor(type: type)
-		// Set up remote ID
-		guard let ckid = recordIDFor(row: row, type: type) else { return }
-		db.delete(withRecordID: ckid) { (rid, error) in
-			if let error = error {
-				NSLog("Error deleting CloudKit record: \(error.localizedDescription)")
-				return
-			}
-			NSLog("Deleted record successfully! ID - \(rid!.recordName)")
-		}
-	}
-	
-	/// Fetch changes for a given SQLTable sub-class and update the table with the changes. This can only be run on the private CloudKit database - so assumes that the call is for the private DB.
-	/// - Parameter row: A instance from an `SQLTable` sub-class. We need this to get relevant row information. So if necessary, just pass a newly created instance - the passed in row is not modified in any way.
-	func fetchChanges(row:SQLTable) {
-		
-	}
-	
-	// MARK:- Private Methods
-	/// Get the CloudKit database to use dependent on the passed-in database type
-	/// - Parameter type: The database type - should be one of `.public`, `.private`, or `.shared`.
-	private func dbFor(type: DBType) -> CKDatabase {
-		// DB to use
-		switch type {
-		case .publicDB:
-			return publicDB
-		case .privateDB:
-			return privateDB
-		case .sharedDB:
-			return sharedDB
-		case .none:
-			assertionFailure("Should not have received a DBType of .none to get DB!")
-		}
-		return publicDB
-	}
-	
-	/// Get the CloudKit record ID for the passed in SQLTable sub-class. The method creates a record ID if there's a valid record ID. If not, it returns `nil`.
-	///   - row: The SQLTable instance to be deleted remotely.
-	///   - type: The database type - should be one of `.public`, `.private`, or `.shared`.
-	private func recordIDFor(row: SQLTable, type: DBType) -> CKRecord.ID? {
-		let data = row.values()
-		// Set up remote ID
-		let idName = row.remoteKey()
-		if let sid = data[idName] as? String, !sid.isEmpty {
-			if type == .privateDB {
-				let zone = CKRecordZone.ID(zoneName: row.table, ownerName: CKCurrentUserDefaultName)
-				return CKRecord.ID(recordName: sid, zoneID: zone)
-			} else {
-				return CKRecord.ID(recordName: sid)
-			}
+
+	private func getRecord(name: String) -> SQLTable? {
+		let bm = Bundle.main
+		let ns = (bm.infoDictionary!["CFBundleExecutable"] as! String).replacingOccurrences(of: " ", with: "_")
+		if let fc = bm.classNamed("\(ns).\(name)") as? SQLTable.Type {
+			let rec = fc.init()
+			return rec
 		}
 		return nil
 	}
-	
-	/// Get the CloudKit record for the passed in SQLTable sub-class. The method creates a new CKRecord instance containing the data from the `SQLTable` sub-class.
-	///   - row: The SQLTable instance to be deleted remotely.
-	///   - type: The database type - should be one of `.public`, `.private`, or `.shared`.
-	private func recordFor(recordID: CKRecord.ID?, row: SQLTable, type: DBType) -> CKRecord {
-		let data = row.values()
-		let idName = row.remoteKey()
-		let record: CKRecord
-		if let ckid = recordID {
-			record = CKRecord(recordType: row.table, recordID: ckid)
-		} else {
-			if type == .privateDB {
-//				let zone = CKRecordZone.ID(zoneName: row.table, ownerName: CKCurrentUserDefaultName)
-//				let ckid = CKRecord.ID(recordName: "", zoneID: zone)
-//				record = CKRecord(recordType: row.table, recordID: ckid)
-				record = CKRecord(recordType: row.table)
-			} else {
-				record = CKRecord(recordType: row.table)
-			}
+
+	private func fetchDatabaseChanges(scope: CKDatabase.Scope) {
+		let db = dbFor(scope: scope)
+		let changeToken = getToken(scope: scope)
+		var changedZoneIDs = [CKRecordZone.ID]()
+		let operation = CKFetchDatabaseChangesOperation(previousServerChangeToken: changeToken)
+		operation.fetchAllChanges = true
+		operation.recordZoneWithIDChangedBlock = { zoneID in
+			changedZoneIDs.append(zoneID)
 		}
-		for (key, val) in data {
-			if let ckval = val as? CKRecordValue {
-				// Handle CloudKit ID
-				if key == idName {
-					continue
+		operation.recordZoneWithIDWasDeletedBlock = {(zoneID) in
+			// Do we need to handle zone deletions?
+			NSLog("Zone was deleted: \(zoneID)")
+		}
+		operation.recordZoneWithIDWasPurgedBlock = {(zoneID) in
+			// Do we need to handle zone purges?
+			NSLog("Zone was purged: \(zoneID)")
+		}
+		operation.changeTokenUpdatedBlock = { token in
+			self.setToken(scope: scope, token: token)
+		}
+		operation.fetchDatabaseChangesResultBlock = { result in
+			switch result {
+			case .failure(let error):
+				NSLog("Error during fetching database changes: \(error)")
+				
+			case .success(let (token, _)):
+				// Flush zone deletions for this database to disk
+				self.setToken(scope: scope, token: token)
+				if changedZoneIDs.count > 0 {
+					self.fetchZoneChanges(database: db, zoneIDs: changedZoneIDs)
 				}
-				record[key] = ckval
 			}
 		}
-		return record
+		operation.qualityOfService = .userInitiated
+		dbFor(scope: scope).add(operation)
+	}
+
+	private func fetchZoneChanges(database: CKDatabase, zoneIDs: [CKRecordZone.ID]) {
+		// Collect changes and deletions
+		var updates = [CKRecord]()
+		var deletions = [(CKRecord.ID, CKRecord.RecordType)]()
+		// Look up the previous change token for each zone
+		var optionsByRecordZoneID = [CKRecordZone.ID: CKFetchRecordZoneChangesOperation.ZoneConfiguration]()
+		for zoneID in zoneIDs {
+			let options = CKFetchRecordZoneChangesOperation.ZoneConfiguration()
+			options.previousServerChangeToken = getToken(scope: database.databaseScope, zone: zoneID.zoneName)
+			optionsByRecordZoneID[zoneID] = options
+		}
+		let operation = CKFetchRecordZoneChangesOperation()
+		operation.configurationsByRecordZoneID = optionsByRecordZoneID
+		operation.recordZoneIDs = zoneIDs
+		operation.recordWasChangedBlock = { rid, result in
+			switch result {
+			case .failure(let error):
+				NSLog("Error changing record: \(error)")
+				
+			case .success(let record):
+				updates.append(record)
+			}
+		}
+		operation.recordWithIDWasDeletedBlock = {(recordId, recordType) in
+			deletions.append((recordId, recordType))
+		}
+		operation.recordZoneChangeTokensUpdatedBlock = {(zoneId, token, _) in
+			self.setToken(scope: database.databaseScope, zone: zoneId.zoneName, token: token)
+		}
+		operation.recordZoneFetchResultBlock = { zoneID, result in
+			switch result {
+			case .failure(let error):
+				NSLog("Error fetching zone changes: \(error)")
+				
+			case .success(let (token, _, _)):
+				self.setToken(scope: database.databaseScope, zone: zoneID.zoneName, token: token)
+			}
+		}
+		operation.fetchRecordZoneChangesResultBlock = { result in
+			switch result {
+			case .failure(let error):
+				NSLog("Error fetching zone changes: \(error)")
+
+			case .success:
+				var types = Set<String>()
+				// Handle changes
+				NSLog("Processing: \(updates.count) updates")
+				for record in updates {
+					let type = record.recordType
+					types.insert(type)
+					if let rec = self.getRecord(name: record.recordType) {
+						rec.cloudLoad(record: record)
+						_ = rec.save(updateCloud: false)
+					}
+				}
+				// Done - notify about changes
+				for type in types {
+					let name = Notification.Name(type + "DataChangedNotification")
+					NSLog("*** Notifying for: \(name)")
+					DispatchQueue.main.async {
+						NotificationCenter.default.post(name: name, object: nil)
+					}
+				}
+				NSLog("Processing: \(deletions.count) deletions")
+				for (recordId, recordType) in deletions {
+					types.insert(recordType)
+					guard let pid = Int(recordId.recordName) else { return }
+					if let rec = self.getRecord(name: recordType) {
+						rec.setValue(pid, forKey: rec.primaryKey)
+						_ = rec.delete(updateCloud: false, force: true)
+					}
+				}
+				// Done - notify about changes
+				for type in types {
+					let name = Notification.Name(type + "DataChangedNotification")
+					NSLog("*** Notifying for: \(name)")
+					DispatchQueue.main.async {
+						NotificationCenter.default.post(name: name, object: nil)
+					}
+				}
+			}
+		}
+		database.add(operation)
 	}
 }
